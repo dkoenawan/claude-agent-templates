@@ -1,5 +1,17 @@
 # Claude Agent Templates - Development Guidelines
 
+## Available Agents
+
+### business-requirements-analyst
+Translates high-level business requirements into detailed technical specifications. Bridges the gap between stakeholder needs and development tasks by breaking down complex business processes into implementable features.
+
+**Tools:** Bash, Edit, MultiEdit, Write, NotebookEdit
+
+### solution-architect  
+Breaks down complex technical requirements into discrete, implementable work units while considering existing system constraints and technical debt. Applies SOLID, DRY, and KISS principles for clean architecture.
+
+**Tools:** Bash, Glob, Grep, LS, Read, WebFetch, TodoWrite, WebSearch, BashOutput, KillBash
+
 ## Contributing Workflow
 
 This repository follows a **trunk-based development** approach for maintaining clean, collaborative development:
