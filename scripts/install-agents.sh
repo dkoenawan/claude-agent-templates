@@ -2,41 +2,36 @@
 
 echo "Installing Claude Agent Templates..."
 
-# Check if we're in a git repository
-if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    echo "Error: This script must be run from within a git repository."
-    echo "Please navigate to your project directory and try again."
-    exit 1
+
+# Create global .claude directory if it doesn't exist
+if [ ! -d "$HOME/.claude" ]; then
+    echo "Creating ~/.claude directory..."
+    mkdir -p "$HOME/.claude"
 fi
 
-# Create .claude directory if it doesn't exist
-if [ ! -d ".claude" ]; then
-    echo "Creating .claude directory..."
-    mkdir -p .claude
-fi
-
-# Create agents directory if it doesn't exist
-if [ ! -d ".claude/agents" ]; then
-    echo "Creating .claude/agents directory..."
-    mkdir -p .claude/agents
+# Create global agents directory if it doesn't exist  
+if [ ! -d "$HOME/.claude/agents" ]; then
+    echo "Creating ~/.claude/agents directory..."
+    mkdir -p "$HOME/.claude/agents"
 fi
 
 # Get the script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AGENTS_SOURCE="$SCRIPT_DIR/../.claude/agents"
+AGENTS_SOURCE="$SCRIPT_DIR/../agents"
 
 # Copy agent files
-echo "Copying agent files..."
+echo "Copying agent files to ~/.claude/agents..."
 
 if [ -f "$AGENTS_SOURCE/business-requirements-analyst.md" ]; then
-    cp "$AGENTS_SOURCE/business-requirements-analyst.md" ".claude/agents/"
+    cp "$AGENTS_SOURCE/business-requirements-analyst.md" "$HOME/.claude/agents/"
     echo "✓ Installed business-requirements-analyst agent"
 else
     echo "✗ Warning: business-requirements-analyst.md not found"
 fi
 
 if [ -f "$AGENTS_SOURCE/solution-architect.md" ]; then
-    cp "$AGENTS_SOURCE/solution-architect.md" ".claude/agents/"
+
+    cp "$AGENTS_SOURCE/solution-architect.md" "$HOME/.claude/agents/"
     echo "✓ Installed solution-architect agent"
 else
     echo "✗ Warning: solution-architect.md not found"

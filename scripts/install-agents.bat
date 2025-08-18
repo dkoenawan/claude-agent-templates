@@ -3,43 +3,39 @@ setlocal enabledelayedexpansion
 
 echo Installing Claude Agent Templates...
 
-REM Check if we're in a git repository
-git rev-parse --is-inside-work-tree >nul 2>&1
-if errorlevel 1 (
-    echo Error: This script must be run from within a git repository.
-    echo Please navigate to your project directory and try again.
-    pause
-    exit /b 1
+
+REM Create global .claude directory if it doesn't exist
+if not exist "%USERPROFILE%\.claude" (
+    echo Creating %USERPROFILE%\.claude directory...
+    mkdir "%USERPROFILE%\.claude"
 )
 
-REM Create .claude directory if it doesn't exist
-if not exist ".claude" (
-    echo Creating .claude directory...
-    mkdir .claude
-)
+REM Create global agents directory if it doesn't exist
+if not exist "%USERPROFILE%\.claude\agents" (
+    echo Creating %USERPROFILE%\.claude\agents directory...
+    mkdir "%USERPROFILE%\.claude\agents"
 
-REM Create agents directory if it doesn't exist
-if not exist ".claude\agents" (
-    echo Creating .claude\agents directory...
-    mkdir .claude\agents
 )
 
 REM Get the script directory
 set "SCRIPT_DIR=%~dp0"
-set "AGENTS_SOURCE=%SCRIPT_DIR%..\..claude\agents"
+
+set "AGENTS_SOURCE=%SCRIPT_DIR%..\agents"
 
 REM Copy agent files
-echo Copying agent files...
+echo Copying agent files to %USERPROFILE%\.claude\agents...
 
 if exist "%AGENTS_SOURCE%\business-requirements-analyst.md" (
-    copy "%AGENTS_SOURCE%\business-requirements-analyst.md" ".claude\agents\" >nul
+    copy "%AGENTS_SOURCE%\business-requirements-analyst.md" "%USERPROFILE%\.claude\agents\" >nul
+
     echo ✓ Installed business-requirements-analyst agent
 ) else (
     echo ✗ Warning: business-requirements-analyst.md not found
 )
 
 if exist "%AGENTS_SOURCE%\solution-architect.md" (
-    copy "%AGENTS_SOURCE%\solution-architect.md" ".claude\agents\" >nul
+    copy "%AGENTS_SOURCE%\solution-architect.md" "%USERPROFILE%\.claude\agents\" >nul
+
     echo ✓ Installed solution-architect agent
 ) else (
     echo ✗ Warning: solution-architect.md not found
