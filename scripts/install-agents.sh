@@ -2,6 +2,7 @@
 
 echo "Installing Claude Agent Templates..."
 
+
 # Create global .claude directory if it doesn't exist
 if [ ! -d "$HOME/.claude" ]; then
     echo "Creating ~/.claude directory..."
@@ -29,6 +30,7 @@ else
 fi
 
 if [ -f "$AGENTS_SOURCE/solution-architect.md" ]; then
+
     cp "$AGENTS_SOURCE/solution-architect.md" "$HOME/.claude/agents/"
     echo "✓ Installed solution-architect agent"
 else

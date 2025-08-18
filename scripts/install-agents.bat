@@ -3,6 +3,7 @@ setlocal enabledelayedexpansion
 
 echo Installing Claude Agent Templates...
 
+
 REM Create global .claude directory if it doesn't exist
 if not exist "%USERPROFILE%\.claude" (
     echo Creating %USERPROFILE%\.claude directory...
@@ -13,10 +14,12 @@ REM Create global agents directory if it doesn't exist
 if not exist "%USERPROFILE%\.claude\agents" (
     echo Creating %USERPROFILE%\.claude\agents directory...
     mkdir "%USERPROFILE%\.claude\agents"
+
 )
 
 REM Get the script directory
 set "SCRIPT_DIR=%~dp0"
+
 set "AGENTS_SOURCE=%SCRIPT_DIR%..\agents"
 
 REM Copy agent files
@@ -24,6 +27,7 @@ echo Copying agent files to %USERPROFILE%\.claude\agents...
 
 if exist "%AGENTS_SOURCE%\business-requirements-analyst.md" (
     copy "%AGENTS_SOURCE%\business-requirements-analyst.md" "%USERPROFILE%\.claude\agents\" >nul
+
     echo ✓ Installed business-requirements-analyst agent
 ) else (
     echo ✗ Warning: business-requirements-analyst.md not found
@@ -31,6 +35,7 @@ if exist "%AGENTS_SOURCE%\business-requirements-analyst.md" (
 
 if exist "%AGENTS_SOURCE%\solution-architect.md" (
     copy "%AGENTS_SOURCE%\solution-architect.md" "%USERPROFILE%\.claude\agents\" >nul
+
     echo ✓ Installed solution-architect agent
 ) else (
     echo ✗ Warning: solution-architect.md not found
