@@ -1,16 +1,47 @@
 # Claude Agent Templates - Development Guidelines
 
+## GitHub Issue-Driven Development Workflow
+
+This repository implements a structured 8-step development workflow where all agents interact through GitHub issues to ensure complete traceability and collaboration.
+
+### Workflow Overview
+1. **User** raises new bug or feature request via GitHub issue
+2. **Business Requirements Analyst** reviews requirements, asks clarifying questions via issue comments
+3. **User** provides answers and clarifications in issue
+4. **Solution Architect** creates comprehensive implementation plan following best practices
+5. **User** reviews and accepts the architectural plan
+6. **Software Engineer Python** implements solution (branch management, commits, PR creation)
+7. **User** accepts implementation via GitHub issue or PR review
+8. **Documentation Agent** performs final documentation updates and repository cleanup
+
+### Agent Interaction Flow
+All agents operate exclusively through GitHub issues using `gh` commands for complete workflow traceability.
+
 ## Available Agents
 
 ### business-requirements-analyst
-Translates high-level business requirements into detailed technical specifications. Bridges the gap between stakeholder needs and development tasks by breaking down complex business processes into implementable features.
+**Workflow Position**: Step 2 - Requirements analysis and clarification
+Analyzes GitHub issues to extract business requirements and asks clarifying questions via issue comments. Labels issues as "requirements-ready" when complete.
 
 **Tools:** Bash, Edit, MultiEdit, Write, NotebookEdit
 
 ### solution-architect  
-Breaks down complex technical requirements into discrete, implementable work units while considering existing system constraints and technical debt. Applies SOLID, DRY, and KISS principles for clean architecture.
+**Workflow Position**: Step 4 - Architectural planning
+Creates comprehensive implementation plans for requirements-ready issues. Designs hexagonal architecture solutions and posts detailed plans via issue comments. Labels issues as "plan-approved" after user acceptance.
 
 **Tools:** Bash, Glob, Grep, LS, Read, WebFetch, TodoWrite, WebSearch, BashOutput, KillBash
+
+### software-engineer-python
+**Workflow Position**: Step 6 - Implementation and PR creation
+Implements plan-approved issues using hexagonal architecture principles. Manages feature/bugfix branches, creates signed commits, and submits pull requests with comprehensive testing.
+
+**Tools:** All tools for comprehensive software development
+
+### documentation
+**Workflow Position**: Step 8 - Final documentation and cleanup
+Performs post-implementation documentation updates and repository cleanup after user accepts implementation. Updates README, API docs, closes issues, and cleans up branches.
+
+**Tools:** Read, Glob, Grep, LS, WebFetch, WebSearch, Write, Edit, MultiEdit, Bash, TodoWrite
 
 ## Contributing Workflow
 
