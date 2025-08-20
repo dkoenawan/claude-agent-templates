@@ -19,17 +19,22 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AGENTS_SOURCE="$SCRIPT_DIR/../agents"
 
-# Copy all agent files
-echo "Copying all agent files to ~/.claude/agents..."
+# Link to agents directory for automatic updates
+echo "Setting up agents directory link..."
 
 if [ -d "$AGENTS_SOURCE" ]; then
-    # Copy all .md files from agents directory, excluding README.md
-    find "$AGENTS_SOURCE" -name "*.md" -not -name "README.md" -exec cp {} "$HOME/.claude/agents/" \;
+    # Remove existing agents directory if it exists
+    if [ -d "$HOME/.claude/agents" ] || [ -L "$HOME/.claude/agents" ]; then
+        rm -rf "$HOME/.claude/agents"
+    fi
     
-    # List installed agents
-    AGENT_COUNT=$(find "$HOME/.claude/agents" -name "*.md" | wc -l)
-    echo "✓ Installed $AGENT_COUNT agents:"
-    find "$HOME/.claude/agents" -name "*.md" -exec basename {} .md \; | sed 's/^/  - /'
+    # Create symlink to this repository's agents directory
+    ln -s "$AGENTS_SOURCE" "$HOME/.claude/agents"
+    
+    # Count and list available agents
+    AGENT_COUNT=$(find "$AGENTS_SOURCE" -name "*.md" -not -name "README.md" | wc -l)
+    echo "✓ Linked to $AGENT_COUNT agents:"
+    find "$AGENTS_SOURCE" -name "*.md" -not -name "README.md" -exec basename {} .md \; | sed 's/^/  - /'
 else
     echo "✗ Error: agents directory not found at $AGENTS_SOURCE"
     exit 1
@@ -38,11 +43,7 @@ fi
 echo ""
 echo "Installation complete!"
 echo ""
-echo "Available agents:"
-echo "- business-requirements-analyst: Translates business requirements to technical specs"
-echo "- solution-architect: Breaks down complex features into implementable work units"
-echo "- software-engineer-python: Implements solutions using hexagonal architecture principles"
-echo "- documentation: Performs post-implementation documentation and cleanup"
+echo "Agents are now linked and will automatically stay up-to-date with this repository."
 echo ""
 echo "To use these agents in Claude Code:"
 echo "1. Run 'claude' to start Claude Code"
