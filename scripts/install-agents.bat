@@ -10,11 +10,9 @@ if not exist "%USERPROFILE%\.claude" (
     mkdir "%USERPROFILE%\.claude"
 )
 
-REM Create global agents directory if it doesn't exist
-if not exist "%USERPROFILE%\.claude\agents" (
-    echo Creating %USERPROFILE%\.claude\agents directory...
-    mkdir "%USERPROFILE%\.claude\agents"
-
+REM Remove existing agents directory/link if it exists
+if exist "%USERPROFILE%\.claude\agents" (
+    rmdir /s /q "%USERPROFILE%\.claude\agents" 2>nul
 )
 
 REM Get the script directory
@@ -22,31 +20,46 @@ set "SCRIPT_DIR=%~dp0"
 
 set "AGENTS_SOURCE=%SCRIPT_DIR%..\agents"
 
-REM Copy agent files
-echo Copying agent files to %USERPROFILE%\.claude\agents...
+REM Link to agents directory for automatic updates
+echo Setting up agents directory link...
 
-if exist "%AGENTS_SOURCE%\business-requirements-analyst.md" (
-    copy "%AGENTS_SOURCE%\business-requirements-analyst.md" "%USERPROFILE%\.claude\agents\" >nul
-
-    echo ✓ Installed business-requirements-analyst agent
+if exist "%AGENTS_SOURCE%" (
+    REM Create symbolic link to agents directory (requires Windows Vista+ and admin rights or Developer Mode)
+    mklink /D "%USERPROFILE%\.claude\agents" "%AGENTS_SOURCE%" >nul
+    if !ERRORLEVEL! equ 0 (
+        REM Count and list available agents
+        set /a AGENT_COUNT=0
+        for %%f in ("%AGENTS_SOURCE%\*.md") do (
+            if not "%%~nxf"=="README.md" (
+                set /a AGENT_COUNT+=1
+            )
+        )
+        echo ✓ Linked to !AGENT_COUNT! agents:
+        for %%f in ("%AGENTS_SOURCE%\*.md") do (
+            if not "%%~nxf"=="README.md" (
+                echo   - %%~nf
+            )
+        )
+    ) else (
+        echo ✗ Warning: Could not create symbolic link. Trying junction...
+        mklink /J "%USERPROFILE%\.claude\agents" "%AGENTS_SOURCE%" >nul
+        if !ERRORLEVEL! equ 0 (
+            echo ✓ Created junction to agents directory
+        ) else (
+            echo ✗ Error: Could not create link or junction to agents directory
+            echo   Please run as administrator or enable Developer Mode
+            exit /b 1
+        )
+    )
 ) else (
-    echo ✗ Warning: business-requirements-analyst.md not found
-)
-
-if exist "%AGENTS_SOURCE%\solution-architect.md" (
-    copy "%AGENTS_SOURCE%\solution-architect.md" "%USERPROFILE%\.claude\agents\" >nul
-
-    echo ✓ Installed solution-architect agent
-) else (
-    echo ✗ Warning: solution-architect.md not found
+    echo ✗ Error: agents directory not found at %AGENTS_SOURCE%
+    exit /b 1
 )
 
 echo.
 echo Installation complete!
 echo.
-echo Available agents:
-echo - business-requirements-analyst: Translates business requirements to technical specs
-echo - solution-architect: Breaks down complex features into implementable work units
+echo Agents are now linked and will automatically stay up-to-date with this repository.
 echo.
 echo To use these agents in Claude Code:
 echo 1. Run 'claude' to start Claude Code
