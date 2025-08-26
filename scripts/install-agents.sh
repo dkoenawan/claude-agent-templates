@@ -2,48 +2,46 @@
 
 echo "Installing Claude Agent Templates..."
 
-
-# Create global .claude directory if it doesn't exist
-if [ ! -d "$HOME/.claude" ]; then
-    echo "Creating ~/.claude directory..."
-    mkdir -p "$HOME/.claude"
-fi
-
-# Create global agents directory if it doesn't exist  
-if [ ! -d "$HOME/.claude/agents" ]; then
-    echo "Creating ~/.claude/agents directory..."
-    mkdir -p "$HOME/.claude/agents"
-fi
-
 # Get the script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AGENTS_SOURCE="$SCRIPT_DIR/../agents"
 
-# Link to agents directory for automatic updates
-echo "Setting up agents directory link..."
+# Create global .claude directory structure
+mkdir -p "$HOME/.claude/agents"
 
-if [ -d "$AGENTS_SOURCE" ]; then
-    # Remove existing agents directory if it exists
-    if [ -d "$HOME/.claude/agents" ] || [ -L "$HOME/.claude/agents" ]; then
-        rm -rf "$HOME/.claude/agents"
+# Find and copy all agent files
+echo "Discovering and copying agent files to ~/.claude/agents..."
+
+installed_count=0
+missing_count=0
+
+# Find all .md files in agents subdirectories
+while IFS= read -r -d '' agent_file; do
+    # Get the filename without path
+    filename=$(basename "$agent_file")
+    
+    # Skip README files
+    if [[ "$filename" == "README.md" ]]; then
+        continue
     fi
     
-    # Create symlink to this repository's agents directory
-    ln -s "$AGENTS_SOURCE" "$HOME/.claude/agents"
-    
-    # Count and list available agents
-    AGENT_COUNT=$(find "$AGENTS_SOURCE" -name "*.md" -not -name "README.md" | wc -l)
-    echo "✓ Linked to $AGENT_COUNT agents:"
-    find "$AGENTS_SOURCE" -name "*.md" -not -name "README.md" -exec basename {} .md \; | sed 's/^/  - /'
-else
-    echo "✗ Error: agents directory not found at $AGENTS_SOURCE"
+    # Copy to global agents directory
+    if cp "$agent_file" "$HOME/.claude/agents/"; then
+        echo "✓ Installed $filename"
+        ((installed_count++))
+    else
+        echo "✗ Failed to install $filename"
+        ((missing_count++))
+    fi
+done < <(find "$AGENTS_SOURCE" -name "*.md" -type f -print0)
+
+if [ $installed_count -eq 0 ]; then
+    echo "✗ No agent files found in $AGENTS_SOURCE"
     exit 1
 fi
 
 echo ""
-echo "Installation complete!"
-echo ""
-echo "Agents are now linked and will automatically stay up-to-date with this repository."
+echo "Installation complete! Installed $installed_count agents."
 echo ""
 echo "To use these agents in Claude Code:"
 echo "1. Run 'claude' to start Claude Code"

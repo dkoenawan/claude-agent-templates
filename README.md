@@ -22,13 +22,15 @@ git clone https://github.com/dkoenawan/claude-agent-templates.git
 cd claude-agent-templates
 ```
 
-### 2. Deploy agents to your project
+### 2. Install agents globally
 ```bash
-# Copy specific agents to your project
-cp agents/code-reviewer.md /path/to/your-project/.claude/agents/
+# Install all agents using the installation script
+./scripts/install-agents.sh
 
-# Or install globally for all projects
-cp agents/*.md ~/.claude/agents/
+# Or manually copy to global directory
+mkdir -p ~/.claude/agents
+cp agents/core/*.md ~/.claude/agents/
+cp agents/python/*.md ~/.claude/agents/
 ```
 
 ### 3. Use agents in Claude Code
@@ -41,18 +43,34 @@ cp agents/*.md ~/.claude/agents/
 
 ```
 claude-agent-templates/
-├── agents/             # Core agent templates
+├── agents/                      # Agent templates organized by domain
+│   ├── core/                   # Language-agnostic workflow agents
+│   │   ├── requirements-analyst.md
+│   │   ├── solution-architect.md
+│   │   └── documentation.md
+│   └── python/                 # Python-specific development agents
+│       ├── test-engineer-python.md
+│       └── software-engineer-python.md
 ├── examples/
-│   ├── project-specific/   # Project-type specific examples
-│   └── workflows/          # Workflow combinations
-├── scripts/            # Automation scripts
-├── docs/              # Detailed documentation
-└── templates/         # Base template for new agents
+│   ├── project-specific/       # Project-type specific examples
+│   └── workflows/             # Workflow combinations
+├── scripts/                   # Installation and automation scripts
+├── docs/                     # Detailed documentation
+└── templates/               # Base template for new agents
 ```
 
 ## Available Agents
 
-*Coming soon - agents will be added incrementally*
+### Core Workflow Agents (Language-Agnostic)
+- **requirements-analyst** - Translates business requirements into technical specifications
+- **solution-architect** - Breaks down complex features into implementable work units
+- **documentation** - Performs final documentation updates and repository cleanup
+
+### Python Development Agents
+- **test-engineer-python** - Creates comprehensive unit test strategies with pytest
+- **software-engineer-python** - Implements solutions using hexagonal architecture principles
+
+*See [agents/README.md](agents/README.md) for complete workflow documentation*
 
 ## Documentation
 
