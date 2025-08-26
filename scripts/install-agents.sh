@@ -2,72 +2,46 @@
 
 echo "Installing Claude Agent Templates..."
 
-
-# Create global .claude directory if it doesn't exist
-if [ ! -d "$HOME/.claude" ]; then
-    echo "Creating ~/.claude directory..."
-    mkdir -p "$HOME/.claude"
-fi
-
-# Create global agents directory if it doesn't exist  
-if [ ! -d "$HOME/.claude/agents" ]; then
-    echo "Creating ~/.claude/agents directory..."
-    mkdir -p "$HOME/.claude/agents"
-fi
-
 # Get the script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AGENTS_SOURCE="$SCRIPT_DIR/../agents"
 
-# Copy agent files
-echo "Copying agent files to ~/.claude/agents..."
+# Create global .claude directory structure
+mkdir -p "$HOME/.claude/agents"
 
-if [ -f "$AGENTS_SOURCE/core/requirements-analyst.md" ]; then
-    cp "$AGENTS_SOURCE/core/requirements-analyst.md" "$HOME/.claude/agents/"
-    echo "✓ Installed requirements-analyst agent"
-else
-    echo "✗ Warning: core/requirements-analyst.md not found"
-fi
+# Find and copy all agent files
+echo "Discovering and copying agent files to ~/.claude/agents..."
 
-if [ -f "$AGENTS_SOURCE/core/solution-architect.md" ]; then
-    cp "$AGENTS_SOURCE/core/solution-architect.md" "$HOME/.claude/agents/"
-    echo "✓ Installed solution-architect agent"
-else
-    echo "✗ Warning: core/solution-architect.md not found"
-fi
+installed_count=0
+missing_count=0
 
-if [ -f "$AGENTS_SOURCE/python/test-engineer-python.md" ]; then
-    cp "$AGENTS_SOURCE/python/test-engineer-python.md" "$HOME/.claude/agents/"
-    echo "✓ Installed test-engineer-python agent"
-else
-    echo "✗ Warning: python/test-engineer-python.md not found"
-fi
+# Find all .md files in agents subdirectories
+while IFS= read -r -d '' agent_file; do
+    # Get the filename without path
+    filename=$(basename "$agent_file")
+    
+    # Skip README files
+    if [[ "$filename" == "README.md" ]]; then
+        continue
+    fi
+    
+    # Copy to global agents directory
+    if cp "$agent_file" "$HOME/.claude/agents/"; then
+        echo "✓ Installed $filename"
+        ((installed_count++))
+    else
+        echo "✗ Failed to install $filename"
+        ((missing_count++))
+    fi
+done < <(find "$AGENTS_SOURCE" -name "*.md" -type f -print0)
 
-if [ -f "$AGENTS_SOURCE/python/software-engineer-python.md" ]; then
-    cp "$AGENTS_SOURCE/python/software-engineer-python.md" "$HOME/.claude/agents/"
-    echo "✓ Installed software-engineer-python agent"
-else
-    echo "✗ Warning: python/software-engineer-python.md not found"
-fi
-
-if [ -f "$AGENTS_SOURCE/core/documentation.md" ]; then
-    cp "$AGENTS_SOURCE/core/documentation.md" "$HOME/.claude/agents/"
-    echo "✓ Installed documentation agent"
-else
-    echo "✗ Warning: core/documentation.md not found"
-
+if [ $installed_count -eq 0 ]; then
+    echo "✗ No agent files found in $AGENTS_SOURCE"
+    exit 1
 fi
 
 echo ""
-echo "Installation complete!"
-echo ""
-echo "Available agents:"
-echo "- requirements-analyst: Translates business requirements to technical specs"
-echo "- solution-architect: Breaks down complex features into implementable work units"
-echo "- test-engineer-python: Creates comprehensive unit test strategies with pytest"
-echo "- software-engineer-python: Implements solutions with hexagonal architecture"
-echo "- documentation: Performs final documentation updates and cleanup"
-
+echo "Installation complete! Installed $installed_count agents."
 echo ""
 echo "To use these agents in Claude Code:"
 echo "1. Run 'claude' to start Claude Code"
