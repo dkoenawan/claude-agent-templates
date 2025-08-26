@@ -206,11 +206,16 @@ Relates to #456
 
 ### 1. Agent Categories
 Help organize agents into logical categories:
-- **Development Workflow** - Code review, testing, debugging
-- **Architecture** - Design patterns, refactoring, documentation  
+
+**Core (Language-Agnostic):**
+- **Workflow Management** - Requirements analysis, architecture planning, documentation
+- **Project Operations** - Issue management, release planning, cleanup
+
+**Technology-Specific:**
+- **Python** - Testing, implementation, security, performance
+- **JavaScript** - Frontend development, Node.js backend, testing
+- **DevOps** - Deployment, infrastructure, monitoring, automation
 - **Security** - Vulnerability scanning, compliance, auditing
-- **Performance** - Optimization, profiling, monitoring
-- **DevOps** - Deployment, infrastructure, automation
 
 ### 2. Example Projects
 Create comprehensive examples showing agents in action:

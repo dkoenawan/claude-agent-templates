@@ -25,28 +25,50 @@ set "AGENTS_SOURCE=%SCRIPT_DIR%..\agents"
 REM Copy agent files
 echo Copying agent files to %USERPROFILE%\.claude\agents...
 
-if exist "%AGENTS_SOURCE%\business-requirements-analyst.md" (
-    copy "%AGENTS_SOURCE%\business-requirements-analyst.md" "%USERPROFILE%\.claude\agents\" >nul
-
-    echo ✓ Installed business-requirements-analyst agent
+if exist "%AGENTS_SOURCE%\core\requirements-analyst.md" (
+    copy "%AGENTS_SOURCE%\core\requirements-analyst.md" "%USERPROFILE%\.claude\agents\" >nul
+    echo ✓ Installed requirements-analyst agent
 ) else (
-    echo ✗ Warning: business-requirements-analyst.md not found
+    echo ✗ Warning: core\requirements-analyst.md not found
 )
 
-if exist "%AGENTS_SOURCE%\solution-architect.md" (
-    copy "%AGENTS_SOURCE%\solution-architect.md" "%USERPROFILE%\.claude\agents\" >nul
-
+if exist "%AGENTS_SOURCE%\core\solution-architect.md" (
+    copy "%AGENTS_SOURCE%\core\solution-architect.md" "%USERPROFILE%\.claude\agents\" >nul
     echo ✓ Installed solution-architect agent
 ) else (
-    echo ✗ Warning: solution-architect.md not found
+    echo ✗ Warning: core\solution-architect.md not found
+)
+
+if exist "%AGENTS_SOURCE%\python\test-engineer-python.md" (
+    copy "%AGENTS_SOURCE%\python\test-engineer-python.md" "%USERPROFILE%\.claude\agents\" >nul
+    echo ✓ Installed test-engineer-python agent
+) else (
+    echo ✗ Warning: python\test-engineer-python.md not found
+)
+
+if exist "%AGENTS_SOURCE%\python\software-engineer-python.md" (
+    copy "%AGENTS_SOURCE%\python\software-engineer-python.md" "%USERPROFILE%\.claude\agents\" >nul
+    echo ✓ Installed software-engineer-python agent
+) else (
+    echo ✗ Warning: python\software-engineer-python.md not found
+)
+
+if exist "%AGENTS_SOURCE%\core\documentation.md" (
+    copy "%AGENTS_SOURCE%\core\documentation.md" "%USERPROFILE%\.claude\agents\" >nul
+    echo ✓ Installed documentation agent
+) else (
+    echo ✗ Warning: core\documentation.md not found
 )
 
 echo.
 echo Installation complete!
 echo.
 echo Available agents:
-echo - business-requirements-analyst: Translates business requirements to technical specs
+echo - requirements-analyst: Translates business requirements to technical specs
 echo - solution-architect: Breaks down complex features into implementable work units
+echo - test-engineer-python: Creates comprehensive unit test strategies with pytest
+echo - software-engineer-python: Implements solutions with hexagonal architecture
+echo - documentation: Performs final documentation updates and cleanup
 echo.
 echo To use these agents in Claude Code:
 echo 1. Run 'claude' to start Claude Code
