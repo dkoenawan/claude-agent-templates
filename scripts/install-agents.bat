@@ -10,11 +10,9 @@ if not exist "%USERPROFILE%\.claude" (
     mkdir "%USERPROFILE%\.claude"
 )
 
-REM Create global agents directory if it doesn't exist
-if not exist "%USERPROFILE%\.claude\agents" (
-    echo Creating %USERPROFILE%\.claude\agents directory...
-    mkdir "%USERPROFILE%\.claude\agents"
-
+REM Remove existing agents directory/link if it exists
+if exist "%USERPROFILE%\.claude\agents" (
+    rmdir /s /q "%USERPROFILE%\.claude\agents" 2>nul
 )
 
 REM Get the script directory
@@ -63,12 +61,14 @@ if exist "%AGENTS_SOURCE%\core\documentation.md" (
 echo.
 echo Installation complete!
 echo.
+
 echo Available agents:
 echo - requirements-analyst: Translates business requirements to technical specs
 echo - solution-architect: Breaks down complex features into implementable work units
 echo - test-engineer-python: Creates comprehensive unit test strategies with pytest
 echo - software-engineer-python: Implements solutions with hexagonal architecture
 echo - documentation: Performs final documentation updates and cleanup
+
 echo.
 echo To use these agents in Claude Code:
 echo 1. Run 'claude' to start Claude Code

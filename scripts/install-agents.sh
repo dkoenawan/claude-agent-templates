@@ -55,6 +55,7 @@ if [ -f "$AGENTS_SOURCE/core/documentation.md" ]; then
     echo "✓ Installed documentation agent"
 else
     echo "✗ Warning: core/documentation.md not found"
+
 fi
 
 echo ""
@@ -66,6 +67,7 @@ echo "- solution-architect: Breaks down complex features into implementable work
 echo "- test-engineer-python: Creates comprehensive unit test strategies with pytest"
 echo "- software-engineer-python: Implements solutions with hexagonal architecture"
 echo "- documentation: Performs final documentation updates and cleanup"
+
 echo ""
 echo "To use these agents in Claude Code:"
 echo "1. Run 'claude' to start Claude Code"
