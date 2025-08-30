@@ -1,6 +1,6 @@
 # Claude Agent Templates
 
-A curated collection of reusable Claude Code agent templates for software development workflows.
+**Version 0.1.1** - A curated collection of reusable Claude Code agent templates for software development workflows.
 
 ## What This Is
 
@@ -115,7 +115,7 @@ We follow a trunk-based development approach with short-lived branches. See [CLA
 
 ## License
 
-MIT License - Feel free to use, modify, and distribute these templates.
+MIT License - Feel free to use, modify, and distribute these templates. See [LICENSE.md](LICENSE.md) for details.
 
 ---
 

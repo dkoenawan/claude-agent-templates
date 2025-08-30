@@ -12,8 +12,9 @@ Thank you for contributing to Claude Agent Templates! This guide will help you c
 ### Development Environment
 1. Fork the repository
 2. Clone your fork locally
-3. Create a feature branch from `main`
-4. Set up your development environment
+3. Install [Task](https://taskfile.dev/installation/) for cross-platform automation
+4. Run `task install` to set up agents locally
+5. Create a feature branch from `main`
 
 ## Contribution Process
 
@@ -231,11 +232,18 @@ examples/
     └── README.md
 ```
 
-### 3. Integration Scripts
-Develop tools to help users adopt agents:
-- Setup scripts for common project types
-- Migration tools for existing configurations
-- Validation tools for agent testing
+### 3. Automation and Tools
+We use a unified Taskfile-based system for repository automation:
+
+**Available Commands:**
+- `task install` - Install all agents to ~/.claude/agents
+- `task list` - Show available and installed agents
+- `task validate` - Verify agent installation
+- `task clean` - Remove installed agents
+- `task help` - Show detailed usage information
+
+**Legacy Compatibility:**
+Existing platform-specific scripts (`scripts/install-agents.sh`, `scripts/install-agents.bat`) are maintained for backward compatibility but new development should use the Taskfile system.
 
 ## Recognition
 

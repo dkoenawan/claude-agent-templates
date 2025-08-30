@@ -256,4 +256,6 @@ tasks:
         echo "  task validate             # Check installation"
         echo ""
         echo "For more information, visit:"
-        echo "https://github.com/your-org/claude-agent-templates"
+        echo "https://github.com/dkoenawan/claude-agent-templates"
+        echo ""
+        echo "VERSION: 0.1.1"
