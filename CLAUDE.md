@@ -1,5 +1,9 @@
 # Claude Agent Templates - Development Guidelines
 
+## Overview
+
+Claude Agent Templates is a comprehensive collection of specialized AI agents designed for software development workflows. This repository provides a structured approach to building, testing, and deploying AI-driven development processes using GitHub issue-driven workflows.
+
 ## GitHub Issue-Driven Development Workflow
 
 This repository implements a structured 9-step development workflow where all agents interact through GitHub issues to ensure complete traceability and collaboration.
@@ -81,3 +85,35 @@ This repository follows a **trunk-based development** approach for maintaining c
 - Test with multiple project types before contributing
 
 This approach ensures continuous integration while maintaining high quality and collaborative development.
+
+## Installation and Setup
+
+This repository uses a unified Taskfile-based automation system for cross-platform compatibility. To get started:
+
+### Prerequisites
+- [Task](https://taskfile.dev/installation/) installed on your system
+- Git configured with your GitHub credentials
+- Claude Code CLI access
+
+### Quick Start
+```bash
+# Install all agents to your ~/.claude/agents directory
+task install
+
+# List available agents
+task list
+
+# Validate agent installation
+task validate
+
+# Clean up installed agents
+task clean
+```
+
+For detailed installation instructions and troubleshooting, see the [Contributing Guide](docs/contributing.md).
+
+## Version Information
+
+**Current Version**: 0.1.1
+
+This release represents a major milestone with the implementation of the Taskfile-based automation system, providing cross-platform compatibility and enhanced functionality while maintaining backward compatibility with existing workflows.

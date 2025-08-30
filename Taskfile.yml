@@ -1,0 +1,261 @@
+version: '3'
+
+# Cross-platform variables for unified task execution
+vars:
+  AGENTS_SOURCE_DIR: './agents'
+  CLAUDE_AGENTS_DIR:
+    sh: |
+      if [ "{{OS}}" = "windows" ]; then
+        echo "${USERPROFILE}\.claude\agents"
+      else
+        echo "${HOME}/.claude/agents"
+      fi
+  PROJECT_ROOT: '{{.ROOT_DIR}}'
+  TASK_BIN: '{{.ROOT_DIR}}/bin/task'
+
+# Global environment setup
+env:
+  PATH: '{{.ROOT_DIR}}/bin:{{.PATH}}'
+
+# Main tasks for agent management
+tasks:
+  # Core installation task - migrated from existing scripts
+  install:
+    desc: Install Claude agent templates to ~/.claude/agents
+    summary: |
+      Installs all agent .md files from the agents directory to the global
+      Claude agents directory, maintaining the same functionality as the
+      original install-agents scripts but with cross-platform compatibility.
+    cmds:
+      - task: _create-claude-dir
+      - task: _install-agents
+      - task: _show-success-message
+
+  # List available and installed agents
+  list:
+    desc: List available agents and their installation status
+    summary: Show all agents in the repository and indicate which are installed
+    cmds:
+      - task: _list-available
+      - task: _list-installed
+
+  # Clean installed agents
+  clean:
+    desc: Remove all installed agents from ~/.claude/agents
+    summary: Clean up the global Claude agents directory with confirmation
+    prompt: This will remove all agents from {{.CLAUDE_AGENTS_DIR}}. Continue?
+    cmds:
+      - task: _clean-agents
+
+  # Validate agent installations
+  validate:
+    desc: Verify agent file integrity and installation status
+    summary: Check that all agents are properly installed and accessible
+    cmds:
+      - task: _validate-installation
+
+  # Update existing agent installations
+  update:
+    desc: Update existing agent installations with latest versions
+    summary: Refresh installed agents with any changes from the repository
+    cmds:
+      - task: _update-agents
+
+  # Help information
+  help:
+    desc: Display detailed help information for all tasks
+    summary: Show comprehensive usage information and examples
+    cmds:
+      - task: _show-help
+
+  # Test task for validation
+  test:
+    desc: Run comprehensive test suite for Taskfile migration
+    summary: Execute all tests to verify installation and functionality
+    cmds:
+      - chmod +x test/test-taskfile.sh
+      - ./test/test-taskfile.sh
+
+  # Default task
+  default:
+    desc: Show available tasks (same as 'task --list')
+    cmds:
+      - task --list
+
+  # Internal helper tasks (prefixed with _ to indicate private)
+  _create-claude-dir:
+    desc: Create the Claude agents directory structure
+    internal: true
+    cmds:
+      - |
+        if [ "{{OS}}" = "windows" ]; then
+          mkdir -p "{{.CLAUDE_AGENTS_DIR}}" 2>/dev/null || true
+        else
+          mkdir -p "{{.CLAUDE_AGENTS_DIR}}"
+        fi
+    status:
+      - test -d "{{.CLAUDE_AGENTS_DIR}}"
+
+  _install-agents:
+    desc: Copy agent files to the Claude directory
+    internal: true
+    cmds:
+      - echo "Installing Claude Agent Templates..."
+      - echo "Discovering and copying agent files to {{.CLAUDE_AGENTS_DIR}}..."
+      - |
+        installed_count=0
+        failed_count=0
+        
+        # Find all .md files in agents subdirectories
+        find "{{.AGENTS_SOURCE_DIR}}" -name "*.md" -type f | while read -r agent_file; do
+          filename=$(basename "$agent_file")
+          
+          # Skip README files
+          if [ "$filename" = "README.md" ]; then
+            continue
+          fi
+          
+          # Copy to global agents directory
+          if cp "$agent_file" "{{.CLAUDE_AGENTS_DIR}}/"; then
+            echo "✓ Installed $filename"
+            installed_count=$((installed_count + 1))
+          else
+            echo "✗ Failed to install $filename"
+            failed_count=$((failed_count + 1))
+          fi
+        done
+
+  _show-success-message:
+    desc: Display installation completion message
+    internal: true
+    cmds:
+      - |
+        # Count installed files
+        installed_count=$(find "{{.CLAUDE_AGENTS_DIR}}" -name "*.md" -type f | grep -v README.md | wc -l)
+        
+        if [ $installed_count -eq 0 ]; then
+          echo "✗ No agent files found in {{.AGENTS_SOURCE_DIR}}"
+          exit 1
+        fi
+        
+        echo ""
+        echo "Installation complete! Installed $installed_count agents."
+        echo ""
+        echo "To use these agents in Claude Code:"
+        echo "1. Run 'claude' to start Claude Code"
+        echo "2. Use '/agents' command to see available agents"
+        echo "3. Use the agents by referencing them in your requests"
+        echo ""
+
+  _list-available:
+    desc: List all available agents in the repository
+    internal: true
+    cmds:
+      - echo "Available agents in repository:"
+      - |
+        find "{{.AGENTS_SOURCE_DIR}}" -name "*.md" -type f | while read -r agent_file; do
+          filename=$(basename "$agent_file")
+          if [ "$filename" != "README.md" ]; then
+            category=$(dirname "$agent_file" | sed 's|.*agents/||')
+            echo "  - $filename ($category)"
+          fi
+        done
+
+  _list-installed:
+    desc: List all installed agents
+    internal: true
+    cmds:
+      - echo ""
+      - echo "Installed agents in {{.CLAUDE_AGENTS_DIR}}:"
+      - |
+        if [ -d "{{.CLAUDE_AGENTS_DIR}}" ]; then
+          find "{{.CLAUDE_AGENTS_DIR}}" -name "*.md" -type f | while read -r agent_file; do
+            filename=$(basename "$agent_file")
+            echo "  ✓ $filename"
+          done
+        else
+          echo "  (no agents installed)"
+        fi
+
+  _clean-agents:
+    desc: Remove all installed agents
+    internal: true
+    cmds:
+      - |
+        if [ -d "{{.CLAUDE_AGENTS_DIR}}" ]; then
+          echo "Removing installed agents..."
+          find "{{.CLAUDE_AGENTS_DIR}}" -name "*.md" -type f | while read -r agent_file; do
+            filename=$(basename "$agent_file")
+            if rm "$agent_file"; then
+              echo "✓ Removed $filename"
+            else
+              echo "✗ Failed to remove $filename"
+            fi
+          done
+          echo ""
+          echo "Cleanup complete! Removed agents from {{.CLAUDE_AGENTS_DIR}}"
+        else
+          echo "No agents directory found at {{.CLAUDE_AGENTS_DIR}}"
+        fi
+
+  _validate-installation:
+    desc: Validate agent installation integrity
+    internal: true
+    cmds:
+      - echo "Validating agent installation..."
+      - |
+        if [ ! -d "{{.CLAUDE_AGENTS_DIR}}" ]; then
+          echo "✗ Claude agents directory not found: {{.CLAUDE_AGENTS_DIR}}"
+          exit 1
+        fi
+        
+        available_count=$(find "{{.AGENTS_SOURCE_DIR}}" -name "*.md" -type f | grep -v README.md | wc -l)
+        installed_count=$(find "{{.CLAUDE_AGENTS_DIR}}" -name "*.md" -type f | wc -l)
+        
+        echo "Available agents: $available_count"
+        echo "Installed agents: $installed_count"
+        
+        if [ $installed_count -eq $available_count ]; then
+          echo "✓ All agents are properly installed"
+        else
+          echo "⚠ Installation incomplete ($installed_count/$available_count agents installed)"
+          echo "Run 'task install' to install missing agents"
+        fi
+
+  _update-agents:
+    desc: Update existing agent installations
+    internal: true
+    cmds:
+      - echo "Updating installed agents..."
+      - task: _install-agents
+      - echo "Update complete!"
+
+  _show-help:
+    desc: Display comprehensive help information
+    internal: true
+    cmds:
+      - |
+        echo "Claude Agent Templates - Taskfile Operations"
+        echo "========================================="
+        echo ""
+        echo "USAGE:"
+        echo "  task [command]"
+        echo ""
+        echo "COMMANDS:"
+        echo "  install     Install all agent templates to ~/.claude/agents"
+        echo "  list        Show available and installed agents"
+        echo "  clean       Remove all installed agents (with confirmation)"
+        echo "  validate    Verify agent installation integrity"
+        echo "  update      Update existing agent installations"
+        echo "  help        Show this help information"
+        echo ""
+        echo "EXAMPLES:"
+        echo "  task install              # Install all agents"
+        echo "  task list                 # Show agent status"
+        echo "  task clean                # Clean up installations"
+        echo "  task validate             # Check installation"
+        echo ""
+        echo "For more information, visit:"
+        echo "https://github.com/dkoenawan/claude-agent-templates"
+        echo ""
+        echo "VERSION: 0.1.1"

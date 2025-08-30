@@ -1,6 +1,6 @@
 # Claude Agent Templates
 
-A curated collection of reusable Claude Code agent templates for software development workflows.
+**Version 0.1.1** - A curated collection of reusable Claude Code agent templates for software development workflows.
 
 ## What This Is
 
@@ -22,12 +22,36 @@ git clone https://github.com/dkoenawan/claude-agent-templates.git
 cd claude-agent-templates
 ```
 
-### 2. Install agents globally
-```bash
-# Install all agents using the installation script
-./scripts/install-agents.sh
+#### Install Task (if not already installed)
+Task is a cross-platform task runner that provides unified automation. Install it from [taskfile.dev/installation](https://taskfile.dev/installation/) or use the included binary:
 
-# Or manually copy to global directory
+```bash
+# The repository includes a Task binary in ./bin/task
+# It will be used automatically if Task is not in your PATH
+```
+
+### 2. Install agents globally
+
+#### Using Task (Recommended)
+```bash
+# Install all agents using the unified Taskfile
+task install
+
+# Or use other Task operations
+task list       # Show available and installed agents
+task validate   # Verify installation integrity
+task clean      # Remove installed agents (with confirmation)
+task update     # Update existing installations
+task help       # Show detailed help
+```
+
+#### Legacy Scripts (Deprecated)
+```bash
+# Still supported but deprecated
+./scripts/install-agents.sh    # Linux/macOS
+./scripts/install-agents.bat   # Windows
+
+# Manual installation (not recommended)
 mkdir -p ~/.claude/agents
 cp agents/core/*.md ~/.claude/agents/
 cp agents/python/*.md ~/.claude/agents/
@@ -91,7 +115,7 @@ We follow a trunk-based development approach with short-lived branches. See [CLA
 
 ## License
 
-MIT License - Feel free to use, modify, and distribute these templates.
+MIT License - Feel free to use, modify, and distribute these templates. See [LICENSE.md](LICENSE.md) for details.
 
 ---
 
