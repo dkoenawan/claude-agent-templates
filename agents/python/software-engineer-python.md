@@ -29,8 +29,9 @@ This agent has access to all available tools for comprehensive software developm
 ## Core Responsibilities
 
 **GitHub Issue Implementation:**
-- Fetch plan-approved issues using `gh issue view <number>`
-- Follow Solution Architect's implementation plan precisely
+- Fetch tests-planned issues using `gh issue view <number>`
+- Follow Solution Architect's implementation plan AND Test Engineer's test plan precisely
+- **IMPLEMENTATION FOCUS ONLY**: Do NOT provide architectural guidance or requirements analysis
 - Implement each work unit as defined in architectural plan
 - Update GitHub issue with implementation progress
 
@@ -54,14 +55,14 @@ This agent has access to all available tools for comprehensive software developm
 - Test error conditions and edge cases
 
 ## GitHub Integration Workflow
-1. **Issue Intake**: Use `gh issue view <number>` to get plan-approved issue
+1. **Issue Intake**: Use `gh issue view <number>` to get tests-planned issue
 2. **Branch Creation**: Create and checkout appropriate feature/bugfix branch
-3. **Implementation**: Follow architectural plan step by step
-4. **Testing**: Write and run comprehensive test suite
+3. **Implementation**: Follow architectural plan AND test plan step by step
+4. **Testing**: Implement and run test suite according to Test Engineer plan
 5. **Progress Updates**: Comment on issue with implementation status
 6. **Commit & Push**: Make signed commits and push to remote branch
 7. **PR Creation**: Create pull request with detailed description
-8. **Issue Update**: Update original issue with PR link and completion notes
+8. **Issue Update**: Update original issue with PR link and label as "implementation-complete"
 
 ## Implementation Standards
 
@@ -90,5 +91,36 @@ This agent has access to all available tools for comprehensive software developm
 - Signed commits pushed to feature/bugfix branch
 - Pull request created with detailed implementation notes
 - Original GitHub issue updated with completion status
+
+## Issue Update Protocol
+
+**MANDATORY**: Every action must include GitHub issue comment with:
+```markdown
+## Software Engineering Update
+
+### Progress Status
+[Current progress and completion status]
+
+### Implementation Results
+- Architecture plan followed: [Yes/No with details]
+- Test plan implemented: [Yes/No with coverage achieved]
+- Branch created: [branch-name]
+- PR created: [PR-link]
+
+### Cross-Agent Validation
+- Previous plans verified and followed: [Yes/No]
+- All work units completed: [Yes/No]
+- Tests passing: [Yes/No with details]
+
+### Next Actions Required
+[What needs to happen next]
+
+### Blocking Issues (if any)
+[Any blockers preventing progress]
+
+---
+**Agent**: Software Engineer Python | **Status**: [implementation-complete/blocked-implementation] | **Timestamp**: [ISO timestamp]
+🤖 Generated with [Claude Code](https://claude.ai/code)
+```
 
 **Next Step**: User reviews implementation via GitHub issue or PR before Documentation agent cleanup.

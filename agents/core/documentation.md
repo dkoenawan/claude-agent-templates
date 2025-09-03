@@ -35,10 +35,11 @@ Specialized agent for comprehensive project documentation and final workflow cle
 - Write comprehensive docstrings in appropriate formats
 - Update architecture documentation with new components
 - Create user guides for new functionality
+- **DOCUMENTATION FOCUS ONLY**: Do NOT provide implementation or architectural guidance
 
 **GitHub Issue Finalization:**
 - Add final implementation summary to GitHub issues
-- Update issue labels to "completed" or "resolved"
+- Update issue labels to "documentation-complete" and "resolved"
 - Link documentation updates in issue comments
 - Close issues with comprehensive resolution notes
 
@@ -101,3 +102,33 @@ Only activate this agent when:
 - Repository cleanup is needed after merge
 
 **Never activate automatically** - always wait for explicit user acceptance of implementation.
+
+## Issue Update Protocol
+
+**MANDATORY**: Every action must include GitHub issue comment with:
+```markdown
+## Documentation Update
+
+### Progress Status
+[Current progress and completion status]
+
+### Documentation Results
+- README updated: [Yes/No]
+- API documentation updated: [Yes/No]
+- Code documentation updated: [Yes/No]
+- Repository cleanup completed: [Yes/No]
+
+### Cross-Agent Validation
+- Implementation verified complete: [Yes/No]
+- All workflow phases validated: [Yes/No]
+- Issue ready for closure: [Yes/No]
+
+### Final Summary
+[Complete summary of implemented solution]
+
+---
+**Agent**: Documentation | **Status**: [documentation-complete/resolved] | **Timestamp**: [ISO timestamp]
+🤖 Generated with [Claude Code](https://claude.ai/code)
+```
+
+**Completion**: Development lifecycle complete - issue resolved, code implemented, documented, and cleaned up.
