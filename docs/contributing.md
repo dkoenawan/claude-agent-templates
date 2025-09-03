@@ -1,11 +1,13 @@
 # Contributing Guidelines
 
-Thank you for contributing to Claude Agent Templates! This guide will help you create high-quality agent templates that benefit the entire community.
+Thank you for contributing to Claude Agent Templates! This guide will help you create high-quality agent templates that integrate seamlessly with our GitHub issue-driven development workflow and benefit the entire community.
 
 ## Getting Started
 
 ### Prerequisites
 - Experience using Claude Code with agents
+- Understanding of our GitHub issue-driven development workflow
+- Familiarity with GitHub issues, comments, and labels for agent coordination
 - Understanding of the specific domain/technology you're creating an agent for
 - Familiarity with our [Agent Writing Guide](agent-guide.md)
 
@@ -89,39 +91,57 @@ description: "Helps with testing stuff"
 ### Agent Requirements
 
 #### ✅ Must Have
-- **Clear purpose** - Specific, well-defined role
+- **Clear purpose** - Specific, well-defined role in the 9-step workflow
+- **GitHub integration** - Uses `gh` commands for issue interaction and workflow coordination
+- **Verification protocols** - Mandatory codebase verification before making assumptions
+- **Cross-agent validation** - Checks and validates previous agent work
 - **Focused scope** - Not trying to do everything
-- **Appropriate tools** - Only tools actually needed
-- **Tested functionality** - Works reliably in real projects
-- **Educational value** - Teaches good practices
+- **Appropriate tools** - Only tools actually needed for workflow step
+- **Tested functionality** - Works reliably in real projects with GitHub issues
+- **Error recovery** - Self-correction capabilities when analysis errors occur
 - **Professional tone** - Constructive and helpful
 
 #### ❌ Must Avoid
+- **Assumption-based analysis** - Must verify file existence and content before planning
+- **Incomplete deliverables** - All agents must ensure full completion of their workflow step
+- **Workflow isolation** - Agents must coordinate through GitHub issues and comments
 - **Overly broad scope** - "Does everything" agents
 - **Unclear instructions** - Vague or ambiguous prompts
 - **Excessive tool permissions** - More tools than needed
 - **Duplicate functionality** - Too similar to existing agents
-- **Untested behavior** - Not validated in real scenarios
+- **Untested behavior** - Not validated in real scenarios with GitHub workflow
 - **Condescending tone** - Negative or judgmental language
 
 ### Testing Requirements
 
-#### 1. Multi-Project Testing
+#### 1. GitHub Workflow Integration Testing
+Test your agent with:
+- **GitHub issue scenarios** - Various issue types (bugs, features, questions)
+- **Multi-agent coordination** - How it hands off to/receives from other agents
+- **Issue commenting** - Proper use of GitHub comments for coordination
+- **Label management** - Correct application of workflow labels
+- **Error scenarios** - How it handles and recovers from analysis errors
+
+#### 2. Multi-Project Testing
 Test your agent with:
 - **Different project sizes** - Small scripts to large applications
 - **Various architectures** - Monoliths, microservices, libraries
 - **Different team contexts** - Solo projects, team codebases
-- **Edge cases** - Empty files, legacy code, incomplete features
+- **Edge cases** - Empty files, legacy code, incomplete features, missing dependencies
+- **Codebase verification** - Projects with misleading directory structures
 
-#### 2. Real-World Validation
+#### 3. Real-World Validation
 ```markdown
 ## Testing Checklist
-- [ ] Tested on at least 3 different projects
-- [ ] Handles edge cases gracefully  
-- [ ] Provides consistent, helpful output
-- [ ] Respects tool limitations
-- [ ] Works with team workflows
-- [ ] Performance is acceptable
+- [ ] Tested GitHub issue workflow in at least 3 different repositories
+- [ ] Verified codebase analysis accuracy before making plans
+- [ ] Tested cross-agent handoffs and state validation
+- [ ] Handles edge cases gracefully with proper error recovery
+- [ ] Provides consistent, helpful output through GitHub issues
+- [ ] Respects tool limitations and workflow boundaries
+- [ ] Works with team workflows and issue templates
+- [ ] Performance is acceptable with large codebases
+- [ ] Self-correction works when provided user feedback
 ```
 
 #### 3. Documentation Testing
@@ -205,18 +225,28 @@ Relates to #456
 
 ## Advanced Contributions
 
-### 1. Agent Categories
-Help organize agents into logical categories:
+### 1. GitHub Issue-Driven Workflow Positions
+Help organize agents by their position in the 9-step workflow:
 
-**Core (Language-Agnostic):**
-- **Workflow Management** - Requirements analysis, architecture planning, documentation
-- **Project Operations** - Issue management, release planning, cleanup
+**Core Workflow Agents (Language-Agnostic):**
+- **Step 2: Requirements Analysis** - Business requirement extraction and clarification
+- **Step 4: Solution Architecture** - Technical planning and work unit breakdown
+- **Step 9: Documentation** - Final documentation updates and repository cleanup
 
-**Technology-Specific:**
-- **Python** - Testing, implementation, security, performance
-- **JavaScript** - Frontend development, Node.js backend, testing
-- **DevOps** - Deployment, infrastructure, monitoring, automation
-- **Security** - Vulnerability scanning, compliance, auditing
+**Technology-Specific Implementation Agents:**
+- **Step 6: Test Engineering** - Test strategy and coverage planning (Python, JavaScript, etc.)
+- **Step 7: Software Engineering** - Implementation with branch management and PR creation
+
+**Specialized Domain Agents:**
+- **Security** - Vulnerability scanning, compliance, auditing (integrates at various steps)
+- **DevOps** - Deployment, infrastructure, monitoring (integrates at implementation step)
+- **Performance** - Optimization and profiling (integrates at architecture/implementation steps)
+
+**Agent Coordination Requirements:**
+- All agents must use GitHub issues for workflow state tracking
+- Each agent must validate previous agent work before proceeding
+- Proper workflow labels must be applied (`requirements-ready`, `plan-approved`, `tests-planned`, etc.)
+- Cross-agent handoffs must be explicit and verified
 
 ### 2. Example Projects
 Create comprehensive examples showing agents in action:
@@ -241,6 +271,13 @@ We use a unified Taskfile-based system for repository automation:
 - `task validate` - Verify agent installation
 - `task clean` - Remove installed agents
 - `task help` - Show detailed usage information
+
+**GitHub Integration Requirements:**
+All agents must support GitHub issue-driven workflows:
+- Use `gh issue comment` for workflow communication
+- Apply appropriate workflow labels (`requirements-ready`, `plan-approved`, etc.)
+- Validate previous agent work before proceeding
+- Handle error scenarios with self-correction capabilities
 
 **Legacy Compatibility:**
 Existing platform-specific scripts (`scripts/install-agents.sh`, `scripts/install-agents.bat`) are maintained for backward compatibility but new development should use the Taskfile system.

@@ -1,18 +1,25 @@
 # Claude Agent Templates
 
-**Version 0.1.1** - A curated collection of reusable Claude Code agent templates for software development workflows.
+**Version 0.1.2** - A comprehensive collection of specialized Claude Code agent templates implementing GitHub issue-driven development workflows with enhanced reliability and cross-agent validation.
 
 ## What This Is
 
-Specialized Claude Code agent templates that you can deploy to any project to get consistent, expert AI assistance for common development tasks like code review, debugging, testing, and documentation.
+Claude Agent Templates provides a structured 9-step GitHub issue-driven development workflow powered by specialized AI agents. Each agent handles a specific phase of software development - from requirements analysis to final documentation - ensuring complete traceability, collaboration, and reliable delivery.
+
+**Key Features:**
+- **GitHub Issue Integration** - All agents interact through GitHub issues for complete workflow traceability
+- **Comprehensive Agent Validation** - Enhanced reliability with mandatory codebase verification and cross-agent validation
+- **End-to-End Accountability** - No incomplete deliverables, agents ensure full implementation
+- **Error Recovery Protocols** - Self-correction capabilities and structured error handling
 
 ## Why Use This
 
-- **Consistency** - Same high-quality approach across all your projects
-- **Efficiency** - No need to re-explain context or preferences to Claude
-- **Specialization** - Purpose-built agents for specific development tasks
-- **Continuous Improvement** - Templates evolve based on real-world usage
-- **Team Collaboration** - Share proven workflows across your team
+- **Structured Workflow** - 9-step GitHub issue-driven process ensures nothing falls through cracks
+- **Reliable Execution** - Enhanced agents with mandatory verification and validation protocols
+- **Complete Traceability** - All agent interactions documented through GitHub issues and comments
+- **Production-Ready** - Battle-tested agents with comprehensive error handling and self-correction
+- **Team Collaboration** - Standardized workflow that scales across teams and projects
+- **Continuous Improvement** - Agents evolve based on real-world performance analysis
 
 ## Quick Start
 
@@ -83,16 +90,36 @@ claude-agent-templates/
 └── templates/               # Base template for new agents
 ```
 
+## GitHub Issue-Driven Development Workflow
+
+This repository implements a structured 9-step development workflow where all agents interact through GitHub issues:
+
+1. **User** raises new bug or feature request via GitHub issue
+2. **Requirements Analyst** reviews requirements, asks clarifying questions via issue comments
+3. **User** provides answers and clarifications in issue
+4. **Solution Architect** creates comprehensive implementation plan following best practices
+5. **User** reviews and accepts the architectural plan
+6. **Test Engineer Python** creates comprehensive unit test strategy with pytest
+7. **Software Engineer Python** implements solution with integrated testing (branch management, commits, PR creation)
+8. **User** accepts implementation via GitHub issue or PR review
+9. **Documentation Agent** performs final documentation updates and repository cleanup
+
 ## Available Agents
 
 ### Core Workflow Agents (Language-Agnostic)
-- **requirements-analyst** - Translates business requirements into technical specifications
-- **solution-architect** - Breaks down complex features into implementable work units
-- **documentation** - Performs final documentation updates and repository cleanup
+- **requirements-analyst** - **Step 2** - Analyzes GitHub issues, extracts business requirements, asks clarifying questions
+- **solution-architect** - **Step 4** - Creates comprehensive implementation plans with hexagonal architecture
+- **documentation** - **Step 9** - Performs final documentation updates and repository cleanup
 
-### Python Development Agents
-- **test-engineer-python** - Creates comprehensive unit test strategies with pytest
-- **software-engineer-python** - Implements solutions using hexagonal architecture principles
+### Python Development Agents  
+- **test-engineer-python** - **Step 6** - Creates comprehensive unit test strategies with pytest, focusing on 80% coverage
+- **software-engineer-python** - **Step 7** - Implements solutions using hexagonal architecture with branch management and PR creation
+
+**Enhanced Reliability Features:**
+- ✅ Mandatory codebase verification before planning
+- ✅ Cross-agent validation and state consistency
+- ✅ Implementation accountability with end-to-end delivery
+- ✅ Error recovery protocols and self-correction capabilities
 
 *See [agents/README.md](agents/README.md) for complete workflow documentation*
 
