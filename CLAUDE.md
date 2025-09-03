@@ -20,7 +20,7 @@ This repository implements a structured 9-step development workflow where all ag
 9. **Documentation Agent** performs final documentation updates and repository cleanup
 
 ### Agent Interaction Flow
-All agents operate exclusively through GitHub issues using `gh` commands for complete workflow traceability.
+All agents operate exclusively through GitHub issues using `gh` commands for complete workflow traceability. Each agent applies standardized GitHub labels to track workflow progression (see [Workflow Labels Guide](docs/workflow-labels.md)).
 
 ## Available Agents
 
