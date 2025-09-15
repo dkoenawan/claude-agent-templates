@@ -76,6 +76,15 @@ tasks:
       - chmod +x test/test-taskfile.sh
       - ./test/test-taskfile.sh
 
+  # Create workflow labels for GitHub repositories
+  create-labels:
+    desc: Create all necessary workflow labels in the current repository
+    summary: |
+      Creates standardized workflow labels used by agents for GitHub issue management.
+      Labels include: requirements-ready, plan-approved, tests-planned, implementation-complete
+    cmds:
+      - task: _create-workflow-labels
+
   # Default task
   default:
     desc: Show available tasks (same as 'task --list')
@@ -259,3 +268,61 @@ tasks:
         echo "https://github.com/dkoenawan/claude-agent-templates"
         echo ""
         echo "VERSION: 0.1.1"
+
+  _create-workflow-labels:
+    desc: Create standardized workflow labels for agent GitHub integration
+    internal: true
+    cmds:
+      - echo "Creating workflow labels for agent GitHub integration..."
+      - |
+        # Define workflow labels with colors and descriptions
+        declare -A labels
+        labels["requirements-ready"]="0052cc:Requirements analysis completed and ready for architecture planning"
+        labels["plan-approved"]="1d76db:Architecture plan approved and ready for test planning"
+        labels["tests-planned"]="0e8a16:Test strategy completed and ready for implementation"
+        labels["implementation-complete"]="5319e7:Implementation finished and ready for documentation"
+        labels["blocked"]="d93f0b:Work blocked waiting for external dependency or user input"
+        labels["needs-clarification"]="fbca04:Requires additional information from user before proceeding"
+        
+        # Check if we're in a git repository
+        if ! git rev-parse --git-dir > /dev/null 2>&1; then
+          echo "✗ Not in a git repository. Please run this command in a git repository."
+          exit 1
+        fi
+        
+        # Check if gh CLI is available
+        if ! command -v gh > /dev/null 2>&1; then
+          echo "✗ GitHub CLI (gh) is not installed. Please install it first."
+          echo "Visit: https://cli.github.com/"
+          exit 1
+        fi
+        
+        # Check if we're in a GitHub repository
+        if ! gh repo view > /dev/null 2>&1; then
+          echo "✗ Not in a GitHub repository or not authenticated with gh CLI."
+          echo "Run 'gh auth login' to authenticate."
+          exit 1
+        fi
+        
+        echo "Creating workflow labels..."
+        created_count=0
+        skipped_count=0
+        
+        for label_name in "${!labels[@]}"; do
+          IFS=':' read -r color description <<< "${labels[$label_name]}"
+          
+          if gh label create "$label_name" --color "$color" --description "$description" 2>/dev/null; then
+            echo "✓ Created label: $label_name"
+            created_count=$((created_count + 1))
+          else
+            echo "• Skipped label: $label_name (already exists)"
+            skipped_count=$((skipped_count + 1))
+          fi
+        done
+        
+        echo ""
+        echo "Label creation complete!"
+        echo "Created: $created_count labels"
+        echo "Skipped: $skipped_count labels (already existed)"
+        echo ""
+        echo "These labels are now ready for use in agent workflows."
