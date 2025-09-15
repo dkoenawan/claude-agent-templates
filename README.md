@@ -37,17 +37,17 @@ Task is a cross-platform task runner that provides unified automation. Install i
 # It will be used automatically if Task is not in your PATH
 ```
 
-### 2. Install agents globally
+### 2. Install agents and commands globally
 
 #### Using Task (Recommended)
 ```bash
-# Install all agents using the unified Taskfile
+# Install all agents and custom commands using the unified Taskfile
 task install
 
 # Or use other Task operations
-task list       # Show available and installed agents
+task list       # Show available and installed agents and commands
 task validate   # Verify installation integrity
-task clean      # Remove installed agents (with confirmation)
+task clean      # Remove installed agents and commands (with confirmation)
 task update     # Update existing installations
 task help       # Show detailed help
 ```
@@ -82,6 +82,10 @@ claude-agent-templates/
 │   └── python/                 # Python-specific development agents
 │       ├── test-engineer-python.md
 │       └── software-engineer-python.md
+├── commands/                   # Custom Claude Code slash commands
+│   └── git/                   # Git workflow commands
+│       ├── clean-up-local.md
+│       └── commit.md
 ├── examples/
 │   ├── project-specific/       # Project-type specific examples
 │   └── workflows/             # Workflow combinations
@@ -122,6 +126,18 @@ This repository implements a structured 9-step development workflow where all ag
 - ✅ Error recovery protocols and self-correction capabilities
 
 *See [agents/README.md](agents/README.md) for complete workflow documentation*
+
+## Custom Commands
+
+This repository includes custom Claude Code slash commands that enhance the development workflow:
+
+### Git Commands
+- **`/git/clean-up-local`** - Switch to main, remove all local branches except main, fetch latest changes
+- **`/git/commit`** - Analyze git diff and create conventional commits with proper formatting
+
+Commands are automatically installed with agents using `task install` and provide streamlined access to common development tasks directly within Claude Code.
+
+*See [commands/README.md](commands/README.md) for complete command documentation*
 
 ## Documentation
 
