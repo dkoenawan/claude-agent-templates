@@ -227,13 +227,19 @@ tasks:
     desc: List all available agents and commands in the repository
     internal: true
     cmds:
-      - echo "Available agents in repository:"
+      - echo "Available agents in repository (organized by workflow stage):"
       - |
-        find "{{.AGENTS_SOURCE_DIR}}" -name "*.md" -type f | while read -r agent_file; do
-          filename=$(basename "$agent_file")
-          if [ "$filename" != "README.md" ]; then
-            category=$(dirname "$agent_file" | sed 's|.*agents/||')
-            echo "  - $filename ($category)"
+        for category_dir in "{{.AGENTS_SOURCE_DIR}}"/*; do
+          if [ -d "$category_dir" ]; then
+            category=$(basename "$category_dir")
+            echo ""
+            echo "  [$category]"
+            find "$category_dir" -name "*.md" -type f | while read -r agent_file; do
+              filename=$(basename "$agent_file")
+              if [ "$filename" != "README.md" ]; then
+                echo "    - $filename"
+              fi
+            done
           fi
         done
       - echo ""

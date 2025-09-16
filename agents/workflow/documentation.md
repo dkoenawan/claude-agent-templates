@@ -30,6 +30,13 @@ Specialized agent for comprehensive Arc42-compliant project documentation and fi
 
 ## Core Responsibilities
 
+**Document-As-Code Finalization:**
+- Consolidate all generated documentation from `docs/requirements/` and `docs/architecture/`
+- Create master Arc42 document in `docs/arc42/issue-{number}-complete.md`
+- Update project-wide Arc42 documentation index with new features
+- Ensure version consistency across all generated documentation
+- Link related documents and create comprehensive navigation
+
 **Arc42 Documentation Compilation:**
 - Compile complete Arc42 architecture documentation from all agent contributions
 - Integrate Requirements Analyst sections 1, 2, 3 (Introduction, Constraints, Context)

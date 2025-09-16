@@ -74,12 +74,16 @@ cp agents/python/*.md ~/.claude/agents/
 
 ```
 claude-agent-templates/
-├── agents/                      # Agent templates organized by domain
-│   ├── core/                   # Language-agnostic workflow agents
+├── agents/                      # Agent templates organized by workflow stage
+│   ├── workflow/               # Core workflow orchestration agents
 │   │   ├── requirements-analyst.md
-│   │   ├── solution-architect.md
 │   │   └── documentation.md
-│   └── python/                 # Python-specific development agents
+│   ├── architecture/           # Solution architecture and planning agents
+│   │   ├── solution-architect.md
+│   │   ├── framework-architect.md
+│   │   ├── minimal-work-identifier.md
+│   │   └── adjacent-work-recommender.md
+│   └── implementation/         # Development and testing agents
 │       ├── test-engineer-python.md
 │       └── software-engineer-python.md
 ├── commands/                   # Custom Claude Code slash commands
@@ -121,14 +125,25 @@ The workflow supports multiple chaining patterns for different development scena
 
 ## Available Agents
 
-### Core Workflow Agents (Language-Agnostic)
-- **requirements-analyst** - **Step 2** - Analyzes GitHub issues, extracts business requirements, asks clarifying questions
-- **solution-architect** - **Step 4** - Creates comprehensive implementation plans with hexagonal architecture
-- **documentation** - **Step 9** - Performs final documentation updates and repository cleanup
+### Workflow Orchestration Agents
+- **requirements-analyst** - **Step 2** - Analyzes GitHub issues, challenges assumptions, creates comprehensive requirements documentation
+- **documentation** - **Step 9** - Performs final Document-As-Code consolidation and repository cleanup
 
-### Python Development Agents  
+### Solution Architecture Agents
+- **solution-architect** - **Step 4** - Creates comprehensive implementation plans with hexagonal architecture and detailed documentation
+- **framework-architect** - Technology selection and framework evaluation for complex features
+- **minimal-work-identifier** - Defines MVP scope and identifies critical path vs nice-to-have features
+- **adjacent-work-recommender** - Identifies expansion opportunities and technical debt after implementation
+
+### Implementation Agents
 - **test-engineer-python** - **Step 6** - Creates comprehensive unit test strategies with pytest, focusing on 80% coverage
-- **software-engineer-python** - **Step 7** - Implements solutions using hexagonal architecture with branch management and PR creation
+- **software-engineer-python** - **Step 7** - Implements solutions using hexagonal architecture with atomic commits and PR creation
+
+**Document-As-Code Integration:**
+- ✅ Comprehensive requirements documentation in `docs/requirements/`
+- ✅ Detailed architecture documentation in `docs/architecture/`
+- ✅ Master Arc42 documentation consolidation in `docs/arc42/`
+- ✅ Version history and traceability through git commits
 
 **Enhanced Reliability Features:**
 - ✅ Mandatory codebase verification before planning
