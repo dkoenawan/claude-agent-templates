@@ -108,6 +108,17 @@ This repository implements a structured 9-step development workflow where all ag
 8. **User** accepts implementation via GitHub issue or PR review
 9. **Documentation Agent** performs final documentation updates and repository cleanup
 
+### Agent Chaining Patterns
+
+The workflow supports multiple chaining patterns for different development scenarios:
+
+- **Sequential Chains** - Traditional step-by-step progression through the workflow
+- **Parallel Chains** - Multiple agents working simultaneously on independent tasks
+- **Conditional Chains** - Different paths based on issue type or requirements
+- **Recursive Chains** - Iterative refinement cycles for complex features
+
+*See [docs/agent-chaining.md](docs/agent-chaining.md) for comprehensive chaining patterns, examples, and best practices*
+
 ## Available Agents
 
 ### Core Workflow Agents (Language-Agnostic)
@@ -141,10 +152,12 @@ Commands are automatically installed with agents using `task install` and provid
 
 ## Documentation
 
+- [Agent Chaining Patterns](docs/agent-chaining.md) - Comprehensive guide to agent workflows and coordination
 - [Agent Writing Guide](docs/agent-guide.md) - How to write effective agents
 - [Customization Guide](docs/customization.md) - How to customize templates
 - [Contributing Guidelines](docs/contributing.md) - How to contribute
 - [Development Workflow](CLAUDE.md) - Trunk-based development process
+- [Workflow Labels Guide](docs/workflow-labels.md) - GitHub label system for tracking workflow state
 
 ## Contributing
 
