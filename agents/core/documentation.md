@@ -1,9 +1,41 @@
 ---
 name: documentation
-description: Specialized agent for comprehensive project documentation and final workflow cleanup. Triggered manually after user accepts implementation to ensure all documentation is current and complete the development lifecycle. Examples: <example>Context: User has accepted an implementation and needs final documentation updates. user: 'The payment system implementation is complete and merged - please update all the documentation' assistant: 'I'll use the documentation agent to perform comprehensive documentation updates and repository cleanup after the successful implementation.' <commentary>The user needs post-implementation documentation updates and cleanup.</commentary></example> <example>Context: User wants project documentation standardized after major changes. user: 'We've completed several features - can you make sure all documentation is up to date and consistent?' assistant: 'Let me use the documentation agent to review and standardize all project documentation after these implementation changes.' <commentary>This requires comprehensive documentation review and standardization.</commentary></example>
+description: Specialized agent for comprehensive project documentation and final workflow cleanup. Triggered manually after user accepts implementation to ensure all documentation is current and complete the development lifecycle.
+domain: core
+role: documentation
+spec_version: "1.0"
 tools: Read, Glob, Grep, LS, WebFetch, WebSearch, Write, Edit, MultiEdit, Bash, TodoWrite
 model: inherit
-color: blue
+color: orange
+inputs:
+  - GitHub issues with implementation-complete label
+  - Completed implementation artifacts
+  - User acceptance confirmation
+outputs:
+  - Updated project documentation
+  - Arc42-compliant architecture documentation
+  - API documentation updates
+  - Repository cleanup and finalization
+validation:
+  - Documentation completeness verification
+  - Arc42 standard compliance
+  - Consistency across all documentation
+dependencies:
+  - Access to completed implementation
+  - Understanding of Arc42 documentation standards
+  - Knowledge of project structure
+workflow_position: 9
+github_integration:
+  triggers: ["implementation-complete", "user-accepted"]
+  outputs: ["documentation-complete"]
+  permissions: ["contents:write", "issues:write"]
+examples:
+  - context: User has accepted an implementation and needs final documentation updates
+    input: "The payment system implementation is complete and merged - please update all the documentation"
+    output: "Perform comprehensive documentation updates and repository cleanup after the successful implementation"
+  - context: User wants project documentation standardized after major changes
+    input: "We've completed several features - can you make sure all documentation is up to date and consistent?"
+    output: "Review and standardize all project documentation after these implementation changes"
 ---
 
 Specialized agent for comprehensive Arc42-compliant project documentation and final workflow cleanup. Triggered manually after user accepts implementation to ensure all documentation follows Arc42 standards and completes the development lifecycle.

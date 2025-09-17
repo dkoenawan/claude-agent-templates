@@ -1,0 +1,285 @@
+openapi: 3.0.3
+info:
+  title: Claude Agent Specification Schema
+  description: Schema for validating Claude Code agent markdown files with YAML frontmatter
+  version: 1.0.0
+
+components:
+  schemas:
+    ClaudeAgentFile:
+      type: object
+      description: Complete Claude agent file structure
+      required:
+        - frontmatter
+        - content
+      properties:
+        frontmatter:
+          $ref: '#/components/schemas/ClaudeAgentFrontmatter'
+        content:
+          $ref: '#/components/schemas/ClaudeAgentContent'
+
+    ClaudeAgentFrontmatter:
+      type: object
+      description: YAML frontmatter section (between --- delimiters)
+      required:
+        - name
+        - description
+        - tools
+      properties:
+        name:
+          type: string
+          pattern: '^[a-z][a-z0-9-]*[a-z0-9]$'
+          description: Unique agent identifier (kebab-case)
+          example: "solution-architect-python"
+        description:
+          type: string
+          minLength: 100
+          description: Agent purpose with embedded examples in XML format
+          example: "Use this agent when... Examples: <example>Context:... user:... assistant:... <commentary>...</commentary></example>"
+        tools:
+          type: array
+          items:
+            type: string
+            enum: [
+              "Bash", "Edit", "MultiEdit", "Write", "Read", "Glob", "Grep", "LS",
+              "WebFetch", "WebSearch", "TodoWrite", "BashOutput", "KillBash",
+              "NotebookEdit", "Task"
+            ]
+          minItems: 1
+          description: Available tools for the agent
+          example: ["Bash", "Edit", "MultiEdit", "Write", "Read"]
+        model:
+          type: string
+          default: "inherit"
+          description: AI model configuration
+          enum: ["inherit", "claude-3-5-sonnet", "claude-3-opus"]
+        color:
+          type: string
+          pattern: '^[a-z]+$'
+          description: UI color coding
+          example: "blue"
+        # Extended fields for spec-driven development
+        domain:
+          type: string
+          enum: [python, dotnet, nodejs, java, rust, go, agnostic]
+          description: Technology domain classification (optional extension)
+        spec_version:
+          type: string
+          pattern: '^\d+\.\d+\.\d+$'
+          description: Agent specification version (optional extension)
+
+    ClaudeAgentContent:
+      type: object
+      description: Markdown content sections after frontmatter
+      required:
+        - workflow_position
+        - primary_use_cases
+      properties:
+        workflow_position:
+          type: string
+          pattern: '^\*\*Step \d+\*\*:'
+          description: Must start with **Step N**: format
+          example: "**Step 2**: After user raises GitHub issue..."
+        primary_use_cases:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: List of primary use cases or capabilities
+        tools_section:
+          type: object
+          description: Optional tools organization section
+          properties:
+            categories:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+        github_integration:
+          type: object
+          description: GitHub-specific workflow integration
+          properties:
+            issue_processing:
+              type: boolean
+            commands_used:
+              type: array
+              items:
+                type: string
+            labels_managed:
+              type: array
+              items:
+                type: string
+        inputs:
+          $ref: '#/components/schemas/AgentInputs'
+        outputs:
+          $ref: '#/components/schemas/AgentOutputs'
+        validation:
+          $ref: '#/components/schemas/ValidationRules'
+        dependencies:
+          $ref: '#/components/schemas/AgentDependencies'
+        workflow_position:
+          type: integer
+          minimum: 1
+          maximum: 9
+          description: Position in 9-step development workflow
+        github_integration:
+          $ref: '#/components/schemas/GitHubIntegration'
+
+    AgentInputs:
+      type: object
+      properties:
+        issue_format:
+          type: object
+          properties:
+            required_labels:
+              type: array
+              items:
+                type: string
+              description: Required GitHub labels for processing
+            content_sections:
+              type: array
+              items:
+                type: string
+              description: Required sections in issue body
+            minimum_content_length:
+              type: integer
+              minimum: 0
+              description: Minimum character count for issue content
+        prerequisites:
+          type: array
+          items:
+            type: string
+          description: Previous workflow steps that must be completed
+
+    AgentOutputs:
+      type: object
+      properties:
+        github_actions:
+          type: object
+          properties:
+            comments:
+              type: boolean
+              description: Whether agent posts issue comments
+            labels:
+              type: array
+              items:
+                type: string
+              description: Labels the agent applies
+            status_updates:
+              type: boolean
+              description: Whether agent updates issue status
+        generated_files:
+          type: array
+          items:
+            type: string
+          description: Files created by the agent
+        workflow_progression:
+          type: string
+          description: Next workflow state after agent completion
+
+    ValidationRules:
+      type: object
+      properties:
+        input_validation:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationRule'
+        output_validation:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationRule'
+
+    ValidationRule:
+      type: object
+      required:
+        - rule_type
+        - rule_expression
+        - error_message
+      properties:
+        rule_type:
+          type: string
+          enum: [syntax, semantic, business, format]
+        rule_expression:
+          type: string
+          description: Validation logic or regex pattern
+        error_message:
+          type: string
+          description: User-friendly error message
+        severity:
+          type: string
+          enum: [error, warning, info]
+          default: error
+        auto_fix:
+          type: boolean
+          default: false
+          description: Whether automatic correction is possible
+
+    AgentDependencies:
+      type: object
+      properties:
+        required_tools:
+          type: array
+          items:
+            type: string
+          description: System tools that must be available
+          example: ["git", "gh", "task"]
+        environment_variables:
+          type: array
+          items:
+            type: string
+          description: Required environment variables
+        minimum_versions:
+          type: object
+          additionalProperties:
+            type: string
+          description: Minimum versions for dependencies
+
+    GitHubIntegration:
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            type: string
+          description: Required GitHub permissions
+          example: ["issues:write", "pull_requests:write"]
+        webhook_events:
+          type: array
+          items:
+            type: string
+          description: GitHub events that trigger the agent
+          example: ["issues.opened", "issues.labeled"]
+        rate_limits:
+          type: object
+          properties:
+            max_requests_per_hour:
+              type: integer
+              description: Maximum GitHub API requests per hour
+            concurrent_processing:
+              type: integer
+              description: Maximum concurrent issue processing
+
+    WorkflowState:
+      type: object
+      properties:
+        current_step:
+          type: integer
+          minimum: 1
+          maximum: 9
+        step_name:
+          type: string
+        completed_agents:
+          type: array
+          items:
+            type: string
+        next_required_agent:
+          type: string
+        blockers:
+          type: array
+          items:
+            type: string
+
+paths:
+  # No actual API endpoints - this is a schema-only specification
+  # Used for validating agent specification files

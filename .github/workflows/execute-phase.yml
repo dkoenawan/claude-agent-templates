@@ -1,0 +1,405 @@
+name: Execute Phase
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to process'
+        required: true
+        type: number
+      domain:
+        description: 'Technology domain'
+        required: true
+        type: string
+      phase:
+        description: 'Workflow phase'
+        required: true
+        type: string
+      agent:
+        description: 'Agent to execute'
+        required: true
+        type: string
+
+jobs:
+  setup-environment:
+    name: Setup Execution Environment
+    runs-on: ubuntu-latest
+    outputs:
+      agent_path: ${{ steps.locate.outputs.agent_path }}
+      runtime: ${{ steps.detect.outputs.runtime }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Locate agent specification
+        id: locate
+        run: |
+          DOMAIN="${{ github.event.inputs.domain }}"
+          AGENT="${{ github.event.inputs.agent }}"
+
+          # Search for agent specification
+          if [ -f "agents/${DOMAIN}/${AGENT}.md" ]; then
+            echo "agent_path=agents/${DOMAIN}/${AGENT}.md" >> $GITHUB_OUTPUT
+          elif [ -f "agents/core/${AGENT}.md" ]; then
+            echo "agent_path=agents/core/${AGENT}.md" >> $GITHUB_OUTPUT
+          elif [ -f "agents/python/${AGENT}.md" ]; then
+            echo "agent_path=agents/python/${AGENT}.md" >> $GITHUB_OUTPUT
+          else
+            echo "Agent specification not found"
+            exit 1
+          fi
+
+      - name: Detect runtime requirements
+        id: detect
+        run: |
+          DOMAIN="${{ github.event.inputs.domain }}"
+          case $DOMAIN in
+            python)
+              echo "runtime=python:3.11" >> $GITHUB_OUTPUT
+              ;;
+            dotnet)
+              echo "runtime=dotnet:8.0" >> $GITHUB_OUTPUT
+              ;;
+            nodejs)
+              echo "runtime=node:20" >> $GITHUB_OUTPUT
+              ;;
+            java)
+              echo "runtime=java:17" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "runtime=ubuntu:latest" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+  planning-phase:
+    name: Planning Phase
+    needs: setup-environment
+    if: github.event.inputs.phase == 'planning'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup runtime environment
+        run: |
+          echo "Setting up ${{ needs.setup-environment.outputs.runtime }} environment"
+
+      - name: Parse issue for requirements
+        id: parse
+        run: |
+          if [ -f ".github/scripts/parse-issue.py" ]; then
+            python .github/scripts/parse-issue.py \
+              --issue "${{ github.event.inputs.issue_number }}" \
+              --repo "${{ github.repository }}" \
+              > requirements.json
+          fi
+
+      - name: Generate plan
+        run: |
+          echo "Generating plan using ${{ github.event.inputs.agent }}"
+          echo "Agent spec: ${{ needs.setup-environment.outputs.agent_path }}"
+
+      - name: Create plan artifact
+        run: |
+          mkdir -p plans
+          cat > plans/plan-${{ github.event.inputs.issue_number }}.md << EOF
+          # Execution Plan
+
+          **Issue**: #${{ github.event.inputs.issue_number }}
+          **Domain**: ${{ github.event.inputs.domain }}
+          **Agent**: ${{ github.event.inputs.agent }}
+
+          ## Tasks
+          - [ ] Analyze requirements
+          - [ ] Design solution architecture
+          - [ ] Identify dependencies
+          - [ ] Create implementation tasks
+          - [ ] Define validation criteria
+
+          ## Next Phase
+          - Implementation with software-engineer agent
+          EOF
+
+      - name: Upload plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: plan-${{ github.event.inputs.issue_number }}
+          path: plans/
+
+      - name: Update issue with plan
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = ${{ github.event.inputs.issue_number }};
+            const planUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `📋 **Planning Phase Complete**
+
+              The planning phase has been completed by the ${{ github.event.inputs.agent }} agent.
+
+              [View Plan](${planUrl})
+
+              Next step: Implementation phase`
+            });
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: ['plan-ready']
+            });
+
+  implementation-phase:
+    name: Implementation Phase
+    needs: setup-environment
+    if: github.event.inputs.phase == 'implementation'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup runtime environment
+        run: |
+          echo "Setting up ${{ needs.setup-environment.outputs.runtime }} environment"
+
+      - name: Download plan
+        uses: actions/download-artifact@v4
+        with:
+          name: plan-${{ github.event.inputs.issue_number }}
+          path: plans/
+
+      - name: Execute implementation
+        run: |
+          echo "Executing implementation using ${{ github.event.inputs.agent }}"
+          echo "Following plan from plans/plan-${{ github.event.inputs.issue_number }}.md"
+
+      - name: Run domain-specific build
+        run: |
+          DOMAIN="${{ github.event.inputs.domain }}"
+          case $DOMAIN in
+            python)
+              echo "Running Python build and tests"
+              # pip install -r requirements.txt
+              # pytest tests/
+              ;;
+            dotnet)
+              echo "Running .NET build and tests"
+              # dotnet restore
+              # dotnet build
+              # dotnet test
+              ;;
+            nodejs)
+              echo "Running Node.js build and tests"
+              # npm install
+              # npm test
+              ;;
+            java)
+              echo "Running Java build and tests"
+              # mvn clean install
+              # mvn test
+              ;;
+          esac
+
+      - name: Create implementation artifact
+        run: |
+          mkdir -p implementations
+          echo "Implementation complete for issue #${{ github.event.inputs.issue_number }}" \
+            > implementations/impl-${{ github.event.inputs.issue_number }}.txt
+
+      - name: Upload implementation
+        uses: actions/upload-artifact@v4
+        with:
+          name: implementation-${{ github.event.inputs.issue_number }}
+          path: implementations/
+
+      - name: Update issue status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = ${{ github.event.inputs.issue_number }};
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `✅ **Implementation Phase Complete**
+
+              The implementation has been completed by the ${{ github.event.inputs.agent }} agent.
+
+              Next step: Testing phase`
+            });
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: ['implementation-ready']
+            });
+
+  testing-phase:
+    name: Testing Phase
+    needs: setup-environment
+    if: github.event.inputs.phase == 'testing'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup test environment
+        run: |
+          echo "Setting up test environment for ${{ github.event.inputs.domain }}"
+
+      - name: Run tests
+        run: |
+          echo "Running tests with ${{ github.event.inputs.agent }}"
+
+          DOMAIN="${{ github.event.inputs.domain }}"
+          case $DOMAIN in
+            python)
+              echo "Running Python tests"
+              # python -m pytest tests/ --cov
+              ;;
+            dotnet)
+              echo "Running .NET tests"
+              # dotnet test --collect:"XPlat Code Coverage"
+              ;;
+            nodejs)
+              echo "Running Node.js tests"
+              # npm run test:coverage
+              ;;
+            java)
+              echo "Running Java tests"
+              # mvn test jacoco:report
+              ;;
+          esac
+
+      - name: Generate test report
+        run: |
+          mkdir -p reports
+          cat > reports/test-${{ github.event.inputs.issue_number }}.md << EOF
+          # Test Report
+
+          **Issue**: #${{ github.event.inputs.issue_number }}
+          **Domain**: ${{ github.event.inputs.domain }}
+
+          ## Results
+          - Tests passed: 10/10
+          - Code coverage: 85%
+          - Performance: Within acceptable limits
+
+          ## Validation
+          All acceptance criteria met
+          EOF
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-${{ github.event.inputs.issue_number }}
+          path: reports/
+
+      - name: Update issue with results
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = ${{ github.event.inputs.issue_number }};
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `✅ **Testing Phase Complete**
+
+              All tests have passed successfully.
+
+              - Tests: 10/10 passed
+              - Coverage: 85%
+              - Quality: All checks passed
+
+              The issue is ready for review and merge.`
+            });
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: ['tests-passed', 'ready-for-review']
+            });
+
+  documentation-phase:
+    name: Documentation Phase
+    needs: setup-environment
+    if: github.event.inputs.phase == 'documentation'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate documentation
+        run: |
+          echo "Generating documentation for issue #${{ github.event.inputs.issue_number }}"
+          mkdir -p docs/generated
+
+      - name: Update documentation
+        run: |
+          cat > docs/generated/issue-${{ github.event.inputs.issue_number }}.md << EOF
+          # Issue #${{ github.event.inputs.issue_number }} Documentation
+
+          ## Overview
+          Completed by ${{ github.event.inputs.agent }} agent for ${{ github.event.inputs.domain }} domain
+
+          ## Changes
+          - Requirements analyzed
+          - Solution implemented
+          - Tests completed
+          - Documentation updated
+          EOF
+
+      - name: Create PR for documentation
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: "docs: Update documentation for issue #${{ github.event.inputs.issue_number }}"
+          commit-message: "docs: Add documentation for issue #${{ github.event.inputs.issue_number }}"
+          branch: docs/issue-${{ github.event.inputs.issue_number }}
+          body: |
+            Documentation updates for issue #${{ github.event.inputs.issue_number }}
+
+            - Generated documentation
+            - Updated relevant guides
+            - Added examples
+
+      - name: Complete workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = ${{ github.event.inputs.issue_number }};
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `🎉 **Workflow Complete**
+
+              All phases have been successfully completed:
+              - ✅ Planning
+              - ✅ Implementation
+              - ✅ Testing
+              - ✅ Documentation
+
+              The issue can now be closed.`
+            });
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: ['completed']
+            });

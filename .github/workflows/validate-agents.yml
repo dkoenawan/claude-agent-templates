@@ -1,0 +1,225 @@
+name: Validate Agents
+
+on:
+  push:
+    paths:
+      - 'agents/**/*.md'
+      - 'scripts/validate-agent-spec.sh'
+      - '.github/workflows/validate-agents.yml'
+  pull_request:
+    paths:
+      - 'agents/**/*.md'
+      - 'scripts/validate-agent-spec.sh'
+      - '.github/workflows/validate-agents.yml'
+  workflow_dispatch:
+
+jobs:
+  validate-structure:
+    name: Validate Agent Structure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Make validation script executable
+        run: chmod +x scripts/validate-agent-spec.sh
+
+      - name: Find all agent specifications
+        id: find-agents
+        run: |
+          echo "## Finding agent specifications..." >> $GITHUB_STEP_SUMMARY
+          agents=$(find agents -name "*.md" -type f)
+
+          if [ -z "$agents" ]; then
+            echo "No agent specifications found"
+            echo "❌ No agent specifications found" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          echo "Found agents:" >> $GITHUB_STEP_SUMMARY
+          for agent in $agents; do
+            echo "- $agent" >> $GITHUB_STEP_SUMMARY
+          done
+
+          # Save for later steps
+          echo "$agents" > agent_list.txt
+
+      - name: Validate each agent specification
+        run: |
+          echo "## Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          FAILED=0
+          PASSED=0
+
+          while IFS= read -r agent; do
+            echo "### Validating: $agent" >> $GITHUB_STEP_SUMMARY
+
+            if scripts/validate-agent-spec.sh "$agent" >> validation.log 2>&1; then
+              echo "✅ Passed validation" >> $GITHUB_STEP_SUMMARY
+              ((PASSED++))
+            else
+              echo "❌ Failed validation" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              tail -n 10 validation.log >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              ((FAILED++))
+            fi
+
+            echo "" >> $GITHUB_STEP_SUMMARY
+          done < agent_list.txt
+
+          echo "## Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Passed: $PASSED" >> $GITHUB_STEP_SUMMARY
+          echo "- ❌ Failed: $FAILED" >> $GITHUB_STEP_SUMMARY
+
+          if [ $FAILED -gt 0 ]; then
+            exit 1
+          fi
+
+  validate-domains:
+    name: Validate Domain Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check domain structure
+        run: |
+          echo "## Domain Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          EXPECTED_DOMAINS=("python" "dotnet" "nodejs" "java" "core")
+
+          for domain in "${EXPECTED_DOMAINS[@]}"; do
+            if [ -d "agents/$domain" ]; then
+              count=$(find "agents/$domain" -name "*.md" -type f | wc -l)
+              echo "✅ Domain **$domain**: $count agents" >> $GITHUB_STEP_SUMMARY
+            else
+              if [ "$domain" != "core" ]; then
+                echo "⚠️ Domain **$domain**: Directory missing" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
+
+      - name: Check for required agent types
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Agent Type Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          AGENT_TYPES=("solution-architect" "software-engineer" "test-engineer")
+
+          for type in "${AGENT_TYPES[@]}"; do
+            echo "### $type agents:" >> $GITHUB_STEP_SUMMARY
+            found=$(find agents -name "*${type}*.md" -type f)
+
+            if [ -z "$found" ]; then
+              echo "❌ No $type agents found" >> $GITHUB_STEP_SUMMARY
+            else
+              for agent in $found; do
+                echo "- $agent" >> $GITHUB_STEP_SUMMARY
+              done
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+          done
+
+  validate-schema:
+    name: Validate Against Schema
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml jsonschema markdown
+
+      - name: Validate agent schemas
+        run: |
+          echo "## Schema Validation" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "scripts/validate-claude-agent.py" ]; then
+            echo "Running schema validation..." >> $GITHUB_STEP_SUMMARY
+            python scripts/validate-claude-agent.py >> $GITHUB_STEP_SUMMARY 2>&1
+          else
+            echo "⚠️ Schema validation script not yet implemented" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  check-consistency:
+    name: Check Cross-Agent Consistency
+    runs-on: ubuntu-latest
+    needs: [validate-structure, validate-domains]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check naming consistency
+        run: |
+          echo "## Naming Consistency Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check for consistent naming patterns
+          for domain in python dotnet nodejs java; do
+            if [ -d "agents/$domain" ]; then
+              echo "### Domain: $domain" >> $GITHUB_STEP_SUMMARY
+
+              expected_agents=(
+                "solution-architect-$domain"
+                "software-engineer-$domain"
+                "test-engineer-$domain"
+              )
+
+              for expected in "${expected_agents[@]}"; do
+                if [ -f "agents/$domain/${expected}.md" ]; then
+                  echo "✅ Found: ${expected}.md" >> $GITHUB_STEP_SUMMARY
+                else
+                  echo "⚠️ Missing: ${expected}.md" >> $GITHUB_STEP_SUMMARY
+                fi
+              done
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+      - name: Check tool consistency
+        run: |
+          echo "## Tool Consistency Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Ensure all agents list their required tools
+          for agent in $(find agents -name "*.md" -type f); do
+            if ! grep -q "tools:" "$agent"; then
+              echo "⚠️ $agent: Missing tools section" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+  summary:
+    name: Validation Summary
+    runs-on: ubuntu-latest
+    needs: [validate-structure, validate-domains, validate-schema, check-consistency]
+    if: always()
+
+    steps:
+      - name: Generate final report
+        run: |
+          echo "# Agent Validation Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.validate-structure.result }}" == "success" ] && \
+             [ "${{ needs.validate-domains.result }}" == "success" ] && \
+             [ "${{ needs.validate-schema.result }}" == "success" ] && \
+             [ "${{ needs.check-consistency.result }}" == "success" ]; then
+            echo "✅ **All validations passed successfully!**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Some validations failed. Please review the results above.**" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
