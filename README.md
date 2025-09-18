@@ -1,27 +1,29 @@
 # Claude Agent Templates
 
-**Version 1.0.0** - A comprehensive collection of specialized Claude Code agent templates implementing spec-driven development with domain-specific agents, GitHub issue automation, and hexagonal architecture patterns.
+**Version 1.0.0** - An extension of GitHub's [Spec-Driven Development toolkit](https://github.blog/ai-and-ml/generative-ai/spec-driven-development-with-ai-get-started-with-a-new-open-source-toolkit/), tailored specifically for Claude Code agents with GitHub Issues/Actions workflow automation and domain-specific specialization.
 
 ## What This Is
 
-Claude Agent Templates provides a structured 9-step GitHub issue-driven development workflow powered by specialized AI agents across multiple technology domains. Each agent handles a specific phase of software development using hexagonal/clean architecture principles, ensuring complete traceability, collaboration, and reliable delivery.
+Claude Agent Templates extends GitHub's Spec-Driven Development approach, creating a bridge between AI agents and structured software development. This project evolved from the need to solve agent miscommunication issues by implementing detailed specifications as the communication protocol between agents. Built on top of GitHub's spec-driven methodology, we've tailored it specifically for Claude Code with GitHub Issues/Actions automation.
 
 **Key Features:**
+- **Spec-Driven Development** - Extends GitHub's spec-driven toolkit with Claude-specific adaptations
 - **Domain-Specific Agents** - Specialized agents for Python, .NET, Node.js, Java, and core workflows
+- **Specification Protocol** - Detailed specs serve as the communication layer between agents
 - **GitHub Issue Automation** - Complete CI/CD pipeline with automatic agent orchestration
 - **Hexagonal Architecture** - Clean architecture patterns implemented across all domain agents
-- **Spec-Driven Development** - Comprehensive specifications with Arc42 documentation standards
 - **Test-Driven Development** - Complete test suites with >80% coverage requirements
 - **Workflow State Management** - 9-step workflow tracking with progress monitoring
 
 ## Why Use This
 
+- **Proven Methodology** - Built on GitHub's spec-driven development breakthrough for AI-assisted development
+- **Agent Communication** - Solves the critical problem of agent miscommunication through detailed specifications
 - **Multi-Domain Support** - Specialized agents for Python, .NET, Node.js, Java with domain expertise
 - **Enterprise Architecture** - Hexagonal/clean architecture patterns for maintainable codebases
 - **Automated Workflows** - GitHub Actions automation for issue classification and agent orchestration
 - **Quality Assurance** - Comprehensive validation, testing, and quality gates
 - **Scalable Development** - Structured approach that scales from small teams to enterprise
-- **Best Practices** - Implements modern software engineering patterns and methodologies
 
 ## Quick Start
 
@@ -111,14 +113,14 @@ claude-agent-templates/
 │   ├── integration/            # Integration tests for workflows
 │   ├── unit/                   # Unit tests for validation logic
 │   └── performance/            # Performance benchmarks
-├── specs/                      # Technical specifications
-│   └── 001-refactor-the-agent/ # Agent refactoring specifications
+├── specs/                      # Technical specifications (core of spec-driven development)
+│   └── 001-refactor-the-agent/ # Example: Agent refactoring specifications
 └── docs/                       # Documentation and guides
 ```
 
-## GitHub Issue-Driven Development Workflow
+## Spec-Driven Development Workflow
 
-This repository implements a structured 9-step development workflow where all agents interact through GitHub issues:
+This repository implements GitHub's spec-driven development approach, enhanced with a structured 9-step workflow where agents communicate through detailed specifications within GitHub issues:
 
 1. **User** raises new bug or feature request via GitHub issue
 2. **Requirements Analyst** reviews requirements, asks clarifying questions via issue comments
@@ -215,4 +217,4 @@ MIT License - Feel free to use, modify, and distribute these templates. See [LIC
 
 ---
 
-Perfect for developers who want to maximize Claude Code's potential with battle-tested agent configurations.
+Built on GitHub's spec-driven development breakthrough, this toolkit represents the evolution of AI-assisted development - where detailed specifications become the lingua franca between specialized Claude agents, ensuring reliable and predictable software delivery.
