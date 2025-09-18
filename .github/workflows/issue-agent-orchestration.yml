@@ -1,0 +1,177 @@
+name: Issue Agent Orchestration
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+  issue_comment:
+    types: [created, edited]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to process'
+        required: true
+        type: number
+
+jobs:
+  classify-and-assign:
+    name: Classify Issue and Assign Agent
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue && contains(github.event.issue.labels.*.name, 'agent-ready'))
+
+    outputs:
+      domain: ${{ steps.classify.outputs.domain }}
+      phase: ${{ steps.classify.outputs.phase }}
+      agent: ${{ steps.classify.outputs.agent }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml markdown requests
+
+      - name: Get issue details
+        id: issue
+        run: |
+          ISSUE_NUMBER="${{ github.event.inputs.issue_number || github.event.issue.number }}"
+          echo "number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Classify domain and phase
+        id: classify
+        run: |
+          if [ -f ".github/scripts/classify-domain.py" ]; then
+            python .github/scripts/classify-domain.py \
+              --issue "${{ steps.issue.outputs.number }}" \
+              --repo "${{ github.repository }}"
+          else
+            echo "domain=python" >> $GITHUB_OUTPUT
+            echo "phase=planning" >> $GITHUB_OUTPUT
+            echo "agent=solution-architect" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Add classification labels
+        if: steps.classify.outputs.domain
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const domain = '${{ steps.classify.outputs.domain }}';
+            const phase = '${{ steps.classify.outputs.phase }}';
+            const issueNumber = ${{ steps.issue.outputs.number }};
+
+            const labels = [
+              `domain:${domain}`,
+              `phase:${phase}`,
+              'agent-assigned'
+            ];
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: labels
+            });
+
+      - name: Post agent assignment comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const domain = '${{ steps.classify.outputs.domain }}';
+            const phase = '${{ steps.classify.outputs.phase }}';
+            const agent = '${{ steps.classify.outputs.agent }}';
+            const issueNumber = ${{ steps.issue.outputs.number }};
+
+            const comment = `🤖 **Agent Assignment**
+
+            - **Domain**: ${domain}
+            - **Phase**: ${phase}
+            - **Assigned Agent**: ${agent}
+
+            The ${agent} agent for ${domain} domain has been assigned to this issue.
+            Processing will begin shortly...`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: comment
+            });
+
+  execute-agent:
+    name: Execute Agent Workflow
+    needs: classify-and-assign
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        run: |
+          echo "Setting up environment for ${{ needs.classify-and-assign.outputs.domain }}"
+          echo "Agent: ${{ needs.classify-and-assign.outputs.agent }}"
+          echo "Phase: ${{ needs.classify-and-assign.outputs.phase }}"
+
+      - name: Trigger execution workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'execute-phase.yml',
+              ref: context.ref,
+              inputs: {
+                issue_number: '${{ github.event.inputs.issue_number || github.event.issue.number }}',
+                domain: '${{ needs.classify-and-assign.outputs.domain }}',
+                phase: '${{ needs.classify-and-assign.outputs.phase }}',
+                agent: '${{ needs.classify-and-assign.outputs.agent }}'
+              }
+            });
+
+      - name: Update issue status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = ${{ github.event.inputs.issue_number || github.event.issue.number }};
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: ['in-progress']
+            });
+
+  error-handler:
+    name: Handle Errors
+    runs-on: ubuntu-latest
+    if: failure()
+    needs: [classify-and-assign, execute-agent]
+
+    steps:
+      - name: Post error comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = ${{ github.event.inputs.issue_number || github.event.issue.number }};
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: '❌ Agent orchestration failed. Please check the workflow logs for details.'
+            });
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: ['error', 'needs-review']
+            });

@@ -1,25 +1,29 @@
 # Claude Agent Templates
 
-**Version 0.1.2** - A comprehensive collection of specialized Claude Code agent templates implementing GitHub issue-driven development workflows with enhanced reliability and cross-agent validation.
+**Version 1.0.0** - An extension of GitHub's [Spec-Driven Development toolkit](https://github.blog/ai-and-ml/generative-ai/spec-driven-development-with-ai-get-started-with-a-new-open-source-toolkit/), tailored specifically for Claude Code agents with GitHub Issues/Actions workflow automation and domain-specific specialization.
 
 ## What This Is
 
-Claude Agent Templates provides a structured 9-step GitHub issue-driven development workflow powered by specialized AI agents. Each agent handles a specific phase of software development - from requirements analysis to final documentation - ensuring complete traceability, collaboration, and reliable delivery.
+Claude Agent Templates extends GitHub's Spec-Driven Development approach, creating a bridge between AI agents and structured software development. This project evolved from the need to solve agent miscommunication issues by implementing detailed specifications as the communication protocol between agents. Built on top of GitHub's spec-driven methodology, we've tailored it specifically for Claude Code with GitHub Issues/Actions automation.
 
 **Key Features:**
-- **GitHub Issue Integration** - All agents interact through GitHub issues for complete workflow traceability
-- **Comprehensive Agent Validation** - Enhanced reliability with mandatory codebase verification and cross-agent validation
-- **End-to-End Accountability** - No incomplete deliverables, agents ensure full implementation
-- **Error Recovery Protocols** - Self-correction capabilities and structured error handling
+- **Spec-Driven Development** - Extends GitHub's spec-driven toolkit with Claude-specific adaptations
+- **Domain-Specific Agents** - Specialized agents for Python, .NET, Node.js, Java, and core workflows
+- **Specification Protocol** - Detailed specs serve as the communication layer between agents
+- **GitHub Issue Automation** - Complete CI/CD pipeline with automatic agent orchestration
+- **Hexagonal Architecture** - Clean architecture patterns implemented across all domain agents
+- **Test-Driven Development** - Complete test suites with >80% coverage requirements
+- **Workflow State Management** - 9-step workflow tracking with progress monitoring
 
 ## Why Use This
 
-- **Structured Workflow** - 9-step GitHub issue-driven process ensures nothing falls through cracks
-- **Reliable Execution** - Enhanced agents with mandatory verification and validation protocols
-- **Complete Traceability** - All agent interactions documented through GitHub issues and comments
-- **Production-Ready** - Battle-tested agents with comprehensive error handling and self-correction
-- **Team Collaboration** - Standardized workflow that scales across teams and projects
-- **Continuous Improvement** - Agents evolve based on real-world performance analysis
+- **Proven Methodology** - Built on GitHub's spec-driven development breakthrough for AI-assisted development
+- **Agent Communication** - Solves the critical problem of agent miscommunication through detailed specifications
+- **Multi-Domain Support** - Specialized agents for Python, .NET, Node.js, Java with domain expertise
+- **Enterprise Architecture** - Hexagonal/clean architecture patterns for maintainable codebases
+- **Automated Workflows** - GitHub Actions automation for issue classification and agent orchestration
+- **Quality Assurance** - Comprehensive validation, testing, and quality gates
+- **Scalable Development** - Structured approach that scales from small teams to enterprise
 
 ## Quick Start
 
@@ -79,20 +83,44 @@ claude-agent-templates/
 │   │   ├── requirements-analyst.md
 │   │   ├── solution-architect.md
 │   │   └── documentation.md
-│   └── python/                 # Python-specific development agents
-│       ├── test-engineer-python.md
-│       └── software-engineer-python.md
-├── examples/
-│   ├── project-specific/       # Project-type specific examples
-│   └── workflows/             # Workflow combinations
-├── scripts/                   # Installation and automation scripts
-├── docs/                     # Detailed documentation
-└── templates/               # Base template for new agents
+│   ├── python/                 # Python-specific development agents
+│   │   ├── solution-architect-python.md
+│   │   ├── software-engineer-python.md
+│   │   └── test-engineer-python.md
+│   ├── dotnet/                 # .NET development agents
+│   │   ├── solution-architect-dotnet.md
+│   │   ├── software-engineer-dotnet.md
+│   │   └── test-engineer-dotnet.md
+│   ├── nodejs/                 # Node.js development agents
+│   │   ├── solution-architect-nodejs.md
+│   │   ├── software-engineer-nodejs.md
+│   │   └── test-engineer-nodejs.md
+│   └── java/                   # Java development agents
+│       ├── solution-architect-java.md
+│       ├── software-engineer-java.md
+│       └── test-engineer-java.md
+├── .github/workflows/          # GitHub Actions automation
+│   ├── issue-agent-orchestration.yml
+│   ├── execute-phase.yml
+│   └── validate-agents.yml
+├── scripts/                    # Validation and automation scripts
+│   ├── validate-claude-agent.py
+│   ├── classify-domain.py
+│   ├── track-workflow.py
+│   └── validate-agent-spec.sh
+├── tests/                      # Comprehensive test suites
+│   ├── contract/               # Contract tests for agent formats
+│   ├── integration/            # Integration tests for workflows
+│   ├── unit/                   # Unit tests for validation logic
+│   └── performance/            # Performance benchmarks
+├── specs/                      # Technical specifications (core of spec-driven development)
+│   └── 001-refactor-the-agent/ # Example: Agent refactoring specifications
+└── docs/                       # Documentation and guides
 ```
 
-## GitHub Issue-Driven Development Workflow
+## Spec-Driven Development Workflow
 
-This repository implements a structured 9-step development workflow where all agents interact through GitHub issues:
+This repository implements GitHub's spec-driven development approach, enhanced with a structured 9-step workflow where agents communicate through detailed specifications within GitHub issues:
 
 1. **User** raises new bug or feature request via GitHub issue
 2. **Requirements Analyst** reviews requirements, asks clarifying questions via issue comments
@@ -107,27 +135,70 @@ This repository implements a structured 9-step development workflow where all ag
 ## Available Agents
 
 ### Core Workflow Agents (Language-Agnostic)
-- **requirements-analyst** - **Step 2** - Analyzes GitHub issues, extracts business requirements, asks clarifying questions
-- **solution-architect** - **Step 4** - Creates comprehensive implementation plans with hexagonal architecture
-- **documentation** - **Step 9** - Performs final documentation updates and repository cleanup
+- **requirements-analyst** - **Step 2** - Analyzes GitHub issues, extracts business requirements with Arc42 standards
+- **solution-architect** - **Step 4** - Creates comprehensive implementation plans with architectural decision records
+- **documentation** - **Step 9** - Performs final documentation updates with Arc42 compliance
 
-### Python Development Agents  
-- **test-engineer-python** - **Step 6** - Creates comprehensive unit test strategies with pytest, focusing on 80% coverage
-- **software-engineer-python** - **Step 7** - Implements solutions using hexagonal architecture with branch management and PR creation
+### Domain-Specific Development Agents
 
-**Enhanced Reliability Features:**
-- ✅ Mandatory codebase verification before planning
-- ✅ Cross-agent validation and state consistency
-- ✅ Implementation accountability with end-to-end delivery
-- ✅ Error recovery protocols and self-correction capabilities
+#### Python Ecosystem
+- **solution-architect-python** - **Step 4** - FastAPI, Django, Flask architecture planning with hexagonal patterns
+- **software-engineer-python** - **Step 6** - Implementation with pytest, black, ruff, and modern Python practices
+- **test-engineer-python** - **Step 5** - Comprehensive testing strategies with >80% coverage requirements
+
+#### .NET Ecosystem
+- **solution-architect-dotnet** - **Step 4** - ASP.NET Core, Entity Framework, clean architecture planning
+- **software-engineer-dotnet** - **Step 6** - Implementation with C#, Entity Framework Core, and xUnit testing
+- **test-engineer-dotnet** - **Step 5** - .NET testing strategies with xUnit, Moq, and TestContainers
+
+#### Node.js Ecosystem
+- **solution-architect-nodejs** - **Step 4** - Express.js, TypeScript, hexagonal architecture planning
+- **software-engineer-nodejs** - **Step 6** - Implementation with modern JavaScript/TypeScript and Jest testing
+- **test-engineer-nodejs** - **Step 5** - Node.js testing strategies with Jest, Supertest, and async patterns
+
+#### Java Ecosystem
+- **solution-architect-java** - **Step 4** - Spring Boot, clean architecture planning with enterprise patterns
+- **software-engineer-java** - **Step 6** - Implementation with Spring Framework, JPA, and modern Java features
+- **test-engineer-java** - **Step 5** - Java testing strategies with JUnit 5, Mockito, and TestContainers
+
+**Enterprise Features:**
+- ✅ Domain-specific expertise with framework specialization
+- ✅ Hexagonal/clean architecture implementation patterns
+- ✅ Comprehensive validation and quality gates
+- ✅ GitHub Actions automation for issue orchestration
+- ✅ Workflow state tracking and progress monitoring
 
 *See [agents/README.md](agents/README.md) for complete workflow documentation*
 
+## Automation and Validation
+
+### GitHub Actions Workflows
+- **Issue Agent Orchestration** - Automatically classifies issues and assigns appropriate agents
+- **Execution Phase** - Manages workflow execution across planning, implementation, testing, and documentation
+- **Agent Validation** - Validates agent specifications and ensures consistency
+
+### Validation Tools
+```bash
+# Validate all agent specifications
+python3 scripts/validate-claude-agent.py
+
+# Classify issue domain and recommend agent
+python3 scripts/classify-domain.py --title "Create FastAPI authentication" --body "JWT-based auth system"
+
+# Track workflow progress
+python3 scripts/track-workflow.py --issue 123 --progress
+
+# Generate workflow status report
+python3 scripts/track-workflow.py --report
+```
+
 ## Documentation
 
-- [Agent Writing Guide](docs/agent-guide.md) - How to write effective agents
-- [Customization Guide](docs/customization.md) - How to customize templates
-- [Contributing Guidelines](docs/contributing.md) - How to contribute
+- [Agent Specifications](docs/agent-specifications.md) - Complete agent specification format
+- [Domain Specialization](docs/domain-specialization.md) - Guide to domain-specific agents
+- [GitHub Actions Setup](docs/github-actions-setup.md) - Setting up automation workflows
+- [Troubleshooting Guide](docs/troubleshooting.md) - Common issues and solutions
+- [Migration Guide](docs/migration-guide.md) - Upgrading from previous versions
 - [Development Workflow](CLAUDE.md) - Trunk-based development process
 
 ## Contributing
@@ -146,4 +217,4 @@ MIT License - Feel free to use, modify, and distribute these templates. See [LIC
 
 ---
 
-Perfect for developers who want to maximize Claude Code's potential with battle-tested agent configurations.
+Built on GitHub's spec-driven development breakthrough, this toolkit represents the evolution of AI-assisted development - where detailed specifications become the lingua franca between specialized Claude agents, ensuring reliable and predictable software delivery.

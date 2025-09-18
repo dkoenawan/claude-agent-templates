@@ -1,0 +1,421 @@
+# GitHub Actions Workflow Specifications for Agent Orchestration
+# Defines workflows that orchestrate /specify -> /plan -> /tasks -> /execute pipeline
+# Triggered by: issues.opened, issue_comment.created, issues.labeled
+
+workflows:
+
+  # Primary workflow: Issue-triggered agent orchestration
+  issue-agent-orchestration:
+    name: "Agent Orchestration"
+    description: "Orchestrates Claude agents based on GitHub issue events"
+
+    triggers:
+      - name: issues
+        events: [opened, labeled, edited]
+        conditions:
+          - "!contains(github.event.issue.labels.*.name, 'skip-agent')"
+          - "github.event.issue.state == 'open'"
+
+      - name: issue_comment
+        events: [created]
+        conditions:
+          - "!github.event.issue.pull_request"
+          - "contains(github.event.comment.body, '@agent')"
+
+    jobs:
+
+      # Job 1: Analyze issue and select appropriate agent
+      agent-selection:
+        name: "Select Agent"
+        runs-on: ubuntu-latest
+        outputs:
+          agent_name: ${{ steps.select.outputs.agent_name }}
+          workflow_step: ${{ steps.select.outputs.workflow_step }}
+          domain: ${{ steps.select.outputs.domain }}
+
+        steps:
+          - name: Checkout repository
+            uses: actions/checkout@v4
+
+          - name: Analyze issue and select agent
+            id: select
+            run: |
+              # Parse issue content, labels, and current workflow state
+              # Determine appropriate agent based on:
+              # - Issue labels (python, dotnet, requirements, etc.)
+              # - Current workflow position (step 1-9)
+              # - Issue content analysis
+              .github/scripts/select-agent.py \
+                --issue-number ${{ github.event.issue.number }} \
+                --event-type ${{ github.event_name }}
+
+      # Job 2: Validate spec-driven development prerequisites
+      validate-prerequisites:
+        name: "Validate Spec Prerequisites"
+        needs: agent-selection
+        if: needs.agent-selection.outputs.workflow_step == '1'
+        runs-on: ubuntu-latest
+        outputs:
+          validation_passed: ${{ steps.validate.outputs.passed }}
+          agent_compatible: ${{ steps.validate.outputs.agent_compatible }}
+
+        steps:
+          - name: Checkout repository
+            uses: actions/checkout@v4
+
+          - name: Validate agent specifications
+            id: validate
+            run: |
+              # Validate selected agent follows spec-driven format
+              python scripts/validate-claude-agent.py \
+                agents/**/${{ needs.agent-selection.outputs.agent_name }}.md
+
+              # Check agent has required spec-driven extensions
+              python scripts/check-spec-compliance.py \
+                --agent ${{ needs.agent-selection.outputs.agent_name }} \
+                --domain ${{ needs.agent-selection.outputs.domain }}
+
+          - name: Validate issue format for spec-driven development
+            run: |
+              # Ensure issue meets spec-driven requirements
+              python .github/scripts/validate-issue-format.py \
+                --issue-number ${{ github.event.issue.number }} \
+                --required-sections "Description,Requirements,Acceptance Criteria"
+
+          - name: Check GitHub Spec-Driven Development toolkit dependencies
+            run: |
+              # Verify GitHub Spec-Driven Development toolkit structure
+              test -d .specify/ || exit 1
+              test -f .specify/memory/constitution.md || exit 1
+              test -d .specify/templates/ || exit 1
+              test -f .specify/templates/spec-template.md || exit 1
+              test -f .specify/templates/plan-template.md || exit 1
+              test -f .specify/templates/tasks-template.md || exit 1
+
+              # Verify GitHub SDD toolkit scripts exist
+              test -f .specify/scripts/bash/create-new-feature.sh || exit 1
+              test -f .specify/scripts/bash/setup-plan.sh || exit 1
+              test -f .specify/scripts/bash/check-task-prerequisites.sh || exit 1
+              test -f .specify/scripts/bash/update-agent-context.sh || exit 1
+
+              # Check for GitHub SDD toolkit configuration
+              test -f .specify/memory/ || echo "Warning: No memory directory found"
+
+              # Verify agent specifications are SDD-compatible
+              python scripts/validate-sdd-compliance.py \
+                --agents-dir agents/ \
+                --toolkit-version latest
+
+      # Job 3: Execute /specify phase (only after validation)
+      specify-phase:
+        name: "Specify Phase"
+        needs: [agent-selection, validate-prerequisites]
+        if: |
+          needs.validate-prerequisites.outputs.validation_passed == 'true' &&
+          needs.agent-selection.outputs.workflow_step == '1'
+        runs-on: ubuntu-latest
+
+        steps:
+          - name: Checkout repository
+            uses: actions/checkout@v4
+
+          - name: Setup Claude Code CLI
+            run: |
+              # Install Claude Code CLI
+              # Configure authentication
+              curl -sSL https://install.claude.ai/code | bash
+
+          - name: Execute /specify command with spec-driven development
+            run: |
+              # Run /specify command following spec-driven development approach
+              # This uses the .specify/scripts/bash/create-new-feature.sh
+              feature_description="${{ github.event.issue.body }}"
+              claude code /specify "$feature_description"
+
+          - name: Validate specification output
+            run: |
+              # Ensure spec.md follows the spec-template.md structure
+              python scripts/validate-spec-output.py \
+                --spec-file specs/*/spec.md \
+                --template .specify/templates/spec-template.md
+
+          - name: Update issue with specification
+            run: |
+              gh issue comment ${{ github.event.issue.number }} \
+                --body-file specs/*/spec.md
+
+          - name: Add workflow label
+            run: |
+              gh issue edit ${{ github.event.issue.number }} \
+                --add-label "spec-ready"
+
+      # Job 4: Execute /plan phase (triggered by spec-ready label, uses GitHub SDD toolkit)
+      plan-phase:
+        name: "Plan Phase (GitHub SDD)"
+        needs: agent-selection
+        if: |
+          needs.agent-selection.outputs.workflow_step == '2' ||
+          contains(github.event.issue.labels.*.name, 'spec-ready')
+        runs-on: ubuntu-latest
+
+        steps:
+          - name: Checkout repository
+            uses: actions/checkout@v4
+
+          - name: Setup Claude Code CLI
+            run: |
+              curl -sSL https://install.claude.ai/code | bash
+
+          - name: Validate GitHub SDD prerequisites for planning
+            run: |
+              # Ensure spec.md exists and follows GitHub SDD format
+              test -f specs/*/spec.md || exit 1
+
+              # Validate spec against GitHub SDD template
+              python scripts/validate-sdd-spec.py \
+                --spec-file specs/*/spec.md \
+                --template .specify/templates/spec-template.md
+
+              # Check constitution compliance
+              python scripts/check-constitution.py \
+                --constitution .specify/memory/constitution.md \
+                --spec-file specs/*/spec.md
+
+          - name: Execute /plan command with GitHub SDD integration
+            run: |
+              # Execute plan following GitHub Spec-Driven Development approach
+              # This integrates with .specify/scripts/bash/setup-plan.sh
+              claude code /plan "${{ needs.agent-selection.outputs.agent_name }} \
+                agent needs to be specialised in their role within the specs; \
+                separated by domain (${{ needs.agent-selection.outputs.domain }}); \
+                following GitHub Spec-Driven Development toolkit patterns"
+
+          - name: Validate plan output against GitHub SDD standards
+            run: |
+              # Ensure plan.md follows GitHub SDD plan-template.md structure
+              python scripts/validate-sdd-plan.py \
+                --plan-file specs/*/plan.md \
+                --template .specify/templates/plan-template.md \
+                --constitution .specify/memory/constitution.md
+
+              # Validate all required artifacts are generated
+              test -f specs/*/research.md || exit 1
+              test -f specs/*/data-model.md || exit 1
+              test -d specs/*/contracts/ || exit 1
+              test -f specs/*/quickstart.md || exit 1
+
+          - name: Update issue with GitHub SDD implementation plan
+            run: |
+              # Post plan following GitHub SDD format
+              gh issue comment ${{ github.event.issue.number }} \
+                --body "## 📋 Implementation Plan (GitHub Spec-Driven Development)
+
+              $(cat specs/*/plan.md)
+
+              **Artifacts Generated:**
+              - 📊 Research: [research.md](specs/*/research.md)
+              - 🏗️ Data Model: [data-model.md](specs/*/data-model.md)
+              - 📋 Contracts: [contracts/](specs/*/contracts/)
+              - 🚀 Quickstart: [quickstart.md](specs/*/quickstart.md)
+
+              **Next Step:** Add \`plan-ready\` label to proceed to task generation phase."
+
+          - name: Add workflow label
+            run: |
+              gh issue edit ${{ github.event.issue.number }} \
+                --add-label "plan-ready" --remove-label "spec-ready"
+
+      # Job 4: Execute /tasks phase (triggered by plan-ready label)
+      tasks-phase:
+        name: "Tasks Phase"
+        needs: agent-selection
+        if: contains(github.event.issue.labels.*.name, 'plan-ready')
+        runs-on: ubuntu-latest
+
+        steps:
+          - name: Checkout repository
+            uses: actions/checkout@v4
+
+          - name: Setup Claude Code CLI
+            run: |
+              curl -sSL https://install.claude.ai/code | bash
+
+          - name: Execute /tasks command
+            run: |
+              claude code /tasks
+
+          - name: Update issue with task list
+            run: |
+              gh issue comment ${{ github.event.issue.number }} \
+                --body-file specs/*/tasks.md
+
+          - name: Add workflow label
+            run: |
+              gh issue edit ${{ github.event.issue.number }} \
+                --add-label "tasks-ready" --remove-label "plan-ready"
+
+      # Job 5: Trigger execution (manual approval step)
+      execution-trigger:
+        name: "Execution Trigger"
+        needs: agent-selection
+        if: contains(github.event.issue.labels.*.name, 'tasks-ready')
+        runs-on: ubuntu-latest
+
+        steps:
+          - name: Request execution approval
+            run: |
+              gh issue comment ${{ github.event.issue.number }} \
+                --body "🤖 **Ready for Execution**
+
+                Tasks have been generated and are ready for implementation.
+
+                **To proceed with automated execution:**
+                - Add label \`execute-approved\` to this issue
+
+                **To proceed with manual execution:**
+                - Review \`tasks.md\` in the spec directory
+                - Execute tasks manually or with Claude Code CLI
+
+                **To modify the plan:**
+                - Add comments with requested changes
+                - Re-run the workflow by adding \`plan-ready\` label"
+
+  # Secondary workflow: Execution phase (triggered by approval)
+  execute-phase:
+    name: "Execute Phase"
+    description: "Executes implementation tasks after approval"
+
+    triggers:
+      - name: issues
+        events: [labeled]
+        conditions:
+          - "github.event.label.name == 'execute-approved'"
+
+    jobs:
+
+      execute-tasks:
+        name: "Execute Implementation Tasks"
+        runs-on: ubuntu-latest
+
+        steps:
+          - name: Checkout repository
+            uses: actions/checkout@v4
+
+          - name: Setup Claude Code CLI
+            run: |
+              curl -sSL https://install.claude.ai/code | bash
+
+          - name: Execute implementation
+            run: |
+              # This would orchestrate the actual implementation
+              # Could be done with Claude Code CLI or other automation
+              echo "Implementation execution would happen here"
+              # .github/scripts/execute-tasks.py --spec-dir specs/*/
+
+          - name: Create pull request
+            run: |
+              # Create PR with implemented changes
+              gh pr create \
+                --title "Implement: ${{ github.event.issue.title }}" \
+                --body "Implements #${{ github.event.issue.number }}" \
+                --base main
+
+  # Utility workflow: Agent validation
+  validate-agents:
+    name: "Validate Agent Specifications"
+    description: "Validates agent specifications on changes"
+
+    triggers:
+      - name: pull_request
+        events: [opened, synchronize]
+        paths: ["agents/**/*.md"]
+
+      - name: push
+        branches: [main]
+        paths: ["agents/**/*.md"]
+
+    jobs:
+
+      validate:
+        name: "Validate Agent Format"
+        runs-on: ubuntu-latest
+
+        steps:
+          - name: Checkout repository
+            uses: actions/checkout@v4
+
+          - name: Validate agent specifications
+            run: |
+              # Validate all agent files against Claude format schema
+              python scripts/validate-claude-agent.py agents/**/*.md
+
+          - name: Check domain classification
+            run: |
+              # Ensure proper domain separation
+              python scripts/classify-domain.py --validate agents/
+
+          - name: Performance test
+            run: |
+              # Test agent response times
+              python tests/performance/test_agent_performance.py
+
+# Agent Selection Logic
+agent_selection_rules:
+
+  # Domain detection based on labels
+  domain_mapping:
+    python: ["python", "py", "django", "flask", "fastapi"]
+    dotnet: ["dotnet", "csharp", "c#", ".net", "aspnet"]
+    nodejs: ["nodejs", "node", "javascript", "js", "react", "vue"]
+    java: ["java", "spring", "maven", "gradle"]
+    agnostic: ["documentation", "requirements", "general"]
+
+  # Workflow step detection
+  workflow_steps:
+    1: # New issue, requirements analysis needed
+      triggers: ["issues.opened"]
+      agent: "requirements-analyst"
+
+    2: # Requirements ready, need architecture
+      triggers: ["issues.labeled:requirements-ready"]
+      agent: "solution-architect-{domain}"
+
+    3: # Architecture ready, need test planning
+      triggers: ["issues.labeled:plan-approved"]
+      agent: "test-engineer-{domain}"
+
+    4: # Tests planned, need implementation
+      triggers: ["issues.labeled:tests-planned"]
+      agent: "software-engineer-{domain}"
+
+    9: # Implementation complete, need documentation
+      triggers: ["issues.labeled:implementation-complete"]
+      agent: "documentation"
+
+# Configuration
+settings:
+
+  # Security and permissions
+  permissions:
+    issues: write
+    contents: write
+    pull-requests: write
+    actions: read
+
+  # Rate limiting
+  rate_limits:
+    max_concurrent_workflows: 3
+    agent_timeout_minutes: 30
+    max_issues_per_hour: 10
+
+  # Notification settings
+  notifications:
+    on_success: issue_comment
+    on_failure: issue_comment
+    on_timeout: issue_label
+
+  # Environment variables required
+  required_env:
+    - GITHUB_TOKEN
+    - CLAUDE_API_KEY
+    - REPO_ACCESS_TOKEN

@@ -1,6 +1,3 @@
-# Claude configuration
-.claude/
-
 # Task binary
 bin/task
 
