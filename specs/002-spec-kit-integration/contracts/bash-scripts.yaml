@@ -1,0 +1,174 @@
+openapi: 3.0.0
+info:
+  title: Bash Scripts Interface
+  description: Contract specifications for spec-kit bash scripts
+  version: 1.0.0
+
+# Note: This uses OpenAPI format for consistency, but describes CLI interfaces
+# "paths" represent script invocations, "parameters" are CLI arguments
+
+paths:
+  /create-new-feature.sh:
+    post:
+      summary: Create a new feature branch and initialize spec file
+      description: |
+        Creates a feature branch, initializes directory structure, and generates
+        spec.md from template. Outputs JSON with branch name and spec file path.
+      operationId: createNewFeature
+      parameters:
+        - name: feature_description
+          in: query
+          description: Natural language feature description (positional arg)
+          required: true
+          schema:
+            type: string
+            example: "Add user authentication"
+        - name: short-name
+          in: query
+          description: Short kebab-case name for the feature (2-4 words)
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-z0-9-]{5,30}$'
+            example: "user-auth"
+        - name: json
+          in: query
+          description: Output JSON format instead of human-readable
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Feature created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [BRANCH_NAME, SPEC_FILE, FEATURE_NUM]
+                properties:
+                  BRANCH_NAME:
+                    type: string
+                    example: "002-user-auth"
+                  SPEC_FILE:
+                    type: string
+                    example: "/path/to/specs/002-user-auth/spec.md"
+                  FEATURE_NUM:
+                    type: string
+                    example: "002"
+        '400':
+          description: Invalid arguments (stderr output, exit 1)
+        '409':
+          description: Feature already exists (stderr output, exit 2)
+
+  /setup-plan.sh:
+    post:
+      summary: Setup planning phase for a feature
+      description: |
+        Copies plan template to feature directory, ready for population.
+        Must be run from feature branch.
+      operationId: setupPlan
+      parameters:
+        - name: json
+          in: query
+          description: Output JSON format
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Planning phase setup complete
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [FEATURE_SPEC, IMPL_PLAN, SPECS_DIR, BRANCH, HAS_GIT]
+                properties:
+                  FEATURE_SPEC:
+                    type: string
+                    description: Path to spec.md
+                  IMPL_PLAN:
+                    type: string
+                    description: Path to plan.md
+                  SPECS_DIR:
+                    type: string
+                    description: Feature directory path
+                  BRANCH:
+                    type: string
+                    description: Current git branch
+                  HAS_GIT:
+                    type: string
+                    enum: ["true", "false"]
+        '400':
+          description: Not on a feature branch (stderr, exit 1)
+
+  /update-agent-context.sh:
+    post:
+      summary: Update agent-specific context file with technology stack
+      description: |
+        Detects which AI agent is in use (Claude, Cursor, etc.) and updates
+        the appropriate context file with new technologies from current plan.
+        Preserves manual additions between markers.
+      operationId: updateAgentContext
+      parameters:
+        - name: agent_type
+          in: query
+          description: AI agent type (auto-detected if omitted)
+          required: false
+          schema:
+            type: string
+            enum: [claude, cursor, auto]
+            default: auto
+      responses:
+        '200':
+          description: Context file updated successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Updated .claude/agent-context.md with 3 new technologies"
+        '404':
+          description: Plan file not found (stderr, exit 1)
+        '500':
+          description: Failed to update context (stderr, exit 2)
+
+  /check-prerequisites.sh:
+    get:
+      summary: Check if required tools are installed
+      description: |
+        Validates that Git, Python, Bash, and optionally GitHub CLI are available.
+        Used by other scripts before execution.
+      operationId: checkPrerequisites
+      parameters:
+        - name: require-gh
+          in: query
+          description: Require GitHub CLI to be installed
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: All prerequisites satisfied
+        '404':
+          description: Missing required tools (stderr lists them, exit 1)
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: "MISSING_ARGUMENT"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Required argument 'feature_description' not provided"
+        details:
+          type: string
+          description: Additional error details
+          example: "Usage: create-new-feature.sh --json \"description\" --short-name \"name\""

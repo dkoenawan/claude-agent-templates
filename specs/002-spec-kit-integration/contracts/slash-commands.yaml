@@ -1,0 +1,286 @@
+openapi: 3.0.0
+info:
+  title: Spec-Kit Slash Commands
+  description: Contract specifications for Claude Code slash commands
+  version: 1.0.0
+
+paths:
+  /speckit.specify:
+    post:
+      summary: Create or update feature specification
+      description: |
+        Generates a feature specification from natural language description.
+        Creates new feature branch, initializes spec.md, validates quality,
+        and presents clarification questions if needed.
+      operationId: specify
+      parameters:
+        - name: feature_description
+          in: query
+          description: Natural language description of the feature
+          required: true
+          schema:
+            type: string
+            minLength: 10
+            example: "Add OAuth2 authentication for the API"
+      responses:
+        '200':
+          description: Specification created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpecificationResult'
+        '400':
+          description: Invalid or insufficient feature description
+        '422':
+          description: Clarification needed (returns questions for user)
+
+  /speckit.plan:
+    post:
+      summary: Generate implementation plan
+      description: |
+        Creates implementation plan from specification, including research,
+        data model, contracts, and quickstart guide. Resolves technical
+        clarifications through research phase.
+      operationId: plan
+      responses:
+        '200':
+          description: Plan generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResult'
+        '404':
+          description: No specification found on current branch
+        '412':
+          description: Specification has unresolved clarifications
+
+  /speckit.clarify:
+    post:
+      summary: Ask clarification questions on specification
+      description: |
+        Identifies underspecified areas in spec.md and asks up to 5
+        targeted clarification questions. Updates spec with answers.
+      operationId: clarify
+      responses:
+        '200':
+          description: Clarifications gathered and spec updated
+        '404':
+          description: No specification found
+        '204':
+          description: No clarifications needed (spec is complete)
+
+  /speckit.tasks:
+    post:
+      summary: Generate actionable task breakdown
+      description: |
+        Creates tasks.md with dependency-ordered implementation tasks
+        based on plan.md and spec.md.
+      operationId: tasks
+      responses:
+        '200':
+          description: Tasks generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TasksResult'
+        '404':
+          description: Plan not found (must run /speckit.plan first)
+
+  /speckit.implement:
+    post:
+      summary: Execute implementation plan
+      description: |
+        Processes and executes all tasks from tasks.md in dependency order.
+        Creates PR when complete.
+      operationId: implement
+      responses:
+        '200':
+          description: Implementation complete, PR created
+        '404':
+          description: Tasks not found (must run /speckit.tasks first)
+        '500':
+          description: Implementation failed (returns failing task)
+
+  /speckit.analyze:
+    post:
+      summary: Perform cross-artifact consistency analysis
+      description: |
+        Non-destructive analysis checking consistency between spec.md,
+        plan.md, and tasks.md. Reports gaps and inconsistencies.
+      operationId: analyze
+      responses:
+        '200':
+          description: Analysis complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResult'
+        '404':
+          description: Required artifacts not found
+
+  /speckit.checklist:
+    post:
+      summary: Generate quality checklist
+      description: |
+        Creates validation checklist for current feature based on
+        constitution and spec requirements.
+      operationId: checklist
+      parameters:
+        - name: type
+          in: query
+          description: Type of checklist to generate
+          required: false
+          schema:
+            type: string
+            enum: [requirements, implementation, testing, documentation]
+            default: requirements
+      responses:
+        '200':
+          description: Checklist generated
+        '404':
+          description: Spec not found
+
+  /speckit.constitution:
+    post:
+      summary: Create or update project constitution
+      description: |
+        Interactive or batch creation of constitution.md defining project
+        principles. Updates all dependent templates to stay in sync.
+      operationId: constitution
+      parameters:
+        - name: interactive
+          in: query
+          description: Use interactive mode for principle input
+          required: false
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Constitution created/updated
+        '409':
+          description: Constitution exists (requires confirmation to overwrite)
+
+components:
+  schemas:
+    SpecificationResult:
+      type: object
+      required: [branch, spec_file, status]
+      properties:
+        branch:
+          type: string
+          example: "002-oauth2-auth"
+        spec_file:
+          type: string
+          example: "/path/to/specs/002-oauth2-auth/spec.md"
+        status:
+          type: string
+          enum: [complete, needs_clarification]
+        checklist_file:
+          type: string
+          example: "/path/to/specs/002-oauth2-auth/checklists/requirements.md"
+        clarifications_needed:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClarificationQuestion'
+
+    PlanResult:
+      type: object
+      required: [plan_file, artifacts]
+      properties:
+        plan_file:
+          type: string
+          example: "/path/to/specs/002-oauth2-auth/plan.md"
+        artifacts:
+          type: object
+          properties:
+            research:
+              type: string
+              example: "/path/to/specs/002-oauth2-auth/research.md"
+            data_model:
+              type: string
+            contracts:
+              type: string
+            quickstart:
+              type: string
+        constitution_status:
+          type: string
+          enum: [compliant, violations_justified, not_defined]
+
+    TasksResult:
+      type: object
+      required: [tasks_file, task_count]
+      properties:
+        tasks_file:
+          type: string
+        task_count:
+          type: integer
+          example: 23
+        estimated_hours:
+          type: number
+          example: 40.5
+
+    AnalysisResult:
+      type: object
+      required: [status, checks]
+      properties:
+        status:
+          type: string
+          enum: [consistent, warnings, errors]
+        checks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsistencyCheck'
+        recommendations:
+          type: array
+          items:
+            type: string
+
+    ClarificationQuestion:
+      type: object
+      required: [id, context, question, options]
+      properties:
+        id:
+          type: string
+          example: "Q1"
+        context:
+          type: string
+          description: Quote from spec showing unclear area
+        question:
+          type: string
+          description: Specific question to ask user
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClarificationOption'
+
+    ClarificationOption:
+      type: object
+      required: [label, value, implications]
+      properties:
+        label:
+          type: string
+          example: "Option A"
+        value:
+          type: string
+          description: The actual answer value
+        implications:
+          type: string
+          description: What this choice means for the feature
+
+    ConsistencyCheck:
+      type: object
+      required: [check_name, status, message]
+      properties:
+        check_name:
+          type: string
+          example: "Requirements coverage in tasks"
+        status:
+          type: string
+          enum: [pass, warning, fail]
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: string

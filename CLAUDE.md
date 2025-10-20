@@ -341,10 +341,10 @@ gh pr create --title "Add new agent capability" --body "Description"
 
 ```
 tests/
-   contract/           # Agent format validation
-   integration/        # Workflow integration tests
-   unit/              # Unit tests for validation logic
-   performance/       # Performance benchmarks
+ contract/           # Agent format validation
+ integration/        # Workflow integration tests
+ unit/              # Unit tests for validation logic
+ performance/       # Performance benchmarks
 ```
 
 ### Running Tests
