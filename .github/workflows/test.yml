@@ -1,0 +1,58 @@
+name: Test
+
+on:
+  push:
+    branches: [main, '**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go-version: ['1.22']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+      - name: Upload coverage
+        if: matrix.os == 'ubuntu-latest'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.txt
+          flags: unittests
+          name: codecov-umbrella
+
+      - name: Build binary
+        run: go build -v -o bin/spec-kit-agents${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./cmd/spec-kit-agents/
+
+      - name: Test CLI version command
+        run: ./bin/spec-kit-agents${{ matrix.os == 'windows-latest' && '.exe' || '' }} version
+
+      - name: Test CLI help command
+        run: ./bin/spec-kit-agents${{ matrix.os == 'windows-latest' && '.exe' || '' }} --help

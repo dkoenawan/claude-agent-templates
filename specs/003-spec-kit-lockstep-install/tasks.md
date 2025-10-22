@@ -34,7 +34,7 @@
 - [X] T002 Create directory structure per plan.md: cmd/spec-kit-agents/, internal/{install,version,config}/, pkg/models/, scripts/
 - [X] T003 [P] Install Go dependencies: cobra, semver, uuid per go.mod
 - [X] T004 [P] Create .gitignore for Go project (bin/, *.exe, go.sum initially)
-- [ ] T005 [P] Set up GitHub Actions workflow file .github/workflows/test.yml for running tests on push/PR
+- [X] T005 [P] Set up GitHub Actions workflow file .github/workflows/test.yml for running tests on push/PR
 
 ---
 
@@ -65,44 +65,44 @@
 
 **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T012 [P] [US1] Unit test for version comparison in internal/version/compare_test.go
-- [ ] T013 [P] [US1] Unit test for manifest parsing in pkg/models/manifest_test.go
-- [ ] T014 [P] [US1] Unit test for prefix detection in internal/install/detect_test.go
-- [ ] T015 [US1] Integration test for fresh install in tests/integration/test_install.sh
+- [X] T012 [P] [US1] Unit test for version comparison in internal/version/compare_test.go
+- [X] T013 [P] [US1] Unit test for manifest parsing in pkg/models/manifest_test.go
+- [X] T014 [P] [US1] Unit test for prefix detection in internal/install/detect_test.go
+- [X] T015 [US1] Integration test for fresh install in tests/integration/test_install.sh
 
 ### Implementation for User Story 1
 
 #### Step 1: Core Installation Logic
 
-- [ ] T016 [P] [US1] Implement .specify/ detection in internal/install/detect.go
-- [ ] T017 [P] [US1] Implement prefix determination logic in internal/install/detect.go (returns "." or ".claude-agent-templates")
-- [ ] T018 [US1] Implement file copy operations in internal/install/copy.go with prefix support
-- [ ] T019 [US1] Implement .claude/ directory setup in internal/install/claude.go (creates commands/ and agents/ subdirs)
+- [X] T016 [P] [US1] Implement .specify/ detection in internal/install/detect.go
+- [X] T017 [P] [US1] Implement prefix determination logic in internal/install/detect.go (returns "." or ".claude-agent-templates")
+- [X] T018 [US1] Implement file copy operations in internal/install/copy.go with prefix support
+- [X] T019 [US1] Implement .claude/ directory setup in internal/install/claude.go (creates commands/ and agents/ subdirs)
 
 #### Step 2: Version Management
 
-- [ ] T020 [US1] Implement version manifest loading in internal/version/manifest.go
-- [ ] T021 [US1] Implement version lock creation in internal/version/lock.go with UUID generation
-- [ ] T022 [US1] Implement version lock saving in internal/version/lock.go
+- [X] T020 [US1] Implement version manifest loading in internal/version/manifest.go
+- [X] T021 [US1] Implement version lock creation in internal/version/lock.go with UUID generation
+- [X] T022 [US1] Implement version lock saving in internal/version/lock.go
 
 #### Step 3: CLI Command
 
-- [ ] T023 [US1] Create cobra CLI main.go in cmd/spec-kit-agents/main.go with install command
-- [ ] T024 [US1] Implement install command handler in internal/install/install.go orchestrating all steps
-- [ ] T025 [US1] Add --prefix, --global, --force, --quiet flags to install command
-- [ ] T026 [US1] Implement installation verification in internal/install/install.go (checks files exist)
+- [X] T023 [US1] Create cobra CLI main.go in cmd/spec-kit-agents/main.go with install command
+- [X] T024 [US1] Implement install command handler in internal/install/install.go orchestrating all steps
+- [X] T025 [US1] Add --prefix, --global, --force, --quiet flags to install command
+- [X] T026 [US1] Implement installation verification in internal/install/install.go (checks files exist)
 
 #### Step 4: Error Handling
 
-- [ ] T027 [US1] Implement error types in internal/install/errors.go (ErrVersionConflict, ErrPermission, etc.)
-- [ ] T028 [US1] Add clear error messages with resolution steps per contracts/go-cli.yaml
-- [ ] T029 [US1] Implement installation logging to ~/.claude-agent-templates/.install-log.txt
+- [X] T027 [US1] Implement error types in internal/install/errors.go (ErrVersionConflict, ErrPermission, etc.)
+- [X] T028 [US1] Add clear error messages with resolution steps per contracts/go-cli.yaml
+- [X] T029 [US1] Implement installation logging to ~/.claude-agent-templates/.install-log.txt
 
 #### Step 5: One-liner Installer
 
-- [ ] T030 [US1] Create bash installer script in scripts/install.sh that detects OS/arch and downloads binary
-- [ ] T031 [US1] Add binary download logic from GitHub Releases to scripts/install.sh
-- [ ] T032 [P] [US1] Create PowerShell installer script in scripts/install.ps1 for Windows (optional)
+- [X] T030 [US1] Create bash installer script in scripts/install.sh that detects OS/arch and downloads binary
+- [X] T031 [US1] Add binary download logic from GitHub Releases to scripts/install.sh
+- [X] T032 [P] [US1] Create PowerShell installer script in scripts/install.ps1 for Windows (optional)
 
 **Checkpoint**: User Story 1 complete - users can run one-liner install and get working setup
 
@@ -116,21 +116,21 @@
 
 ### Tests for User Story 2 (TDD)
 
-- [ ] T033 [P] [US2] Unit test for version range checking in internal/version/compare_test.go
-- [ ] T034 [P] [US2] Unit test for compatibility validation in internal/version/check_test.go
-- [ ] T035 [US2] Integration test for version check in tests/integration/test_check.sh
+- [X] T033 [P] [US2] Unit test for version range checking in internal/version/compare_test.go
+- [X] T034 [P] [US2] Unit test for compatibility validation in internal/version/check_test.go
+- [X] T035 [US2] Integration test for version check in tests/integration/test_check.sh
 
 ### Implementation for User Story 2
 
 #### Step 1: Version Checking Logic
 
-- [ ] T036 [P] [US2] Implement version compatibility checking in internal/version/check.go
-- [ ] T037 [P] [US2] Implement version range validation (min_version, max_version) in internal/version/check.go
-- [ ] T038 [P] [US2] Implement breaking version detection in internal/version/check.go
+- [X] T036 [P] [US2] Implement version compatibility checking in internal/version/check.go
+- [X] T037 [P] [US2] Implement version range validation (min_version, max_version) in internal/version/check.go
+- [X] T038 [P] [US2] Implement breaking version detection in internal/version/check.go
 
 #### Step 2: CLI Command
 
-- [ ] T039 [US2] Add check command to cobra CLI in cmd/spec-kit-agents/main.go
+- [X] T039 [US2] Add check command to cobra CLI in cmd/spec-kit-agents/main.go
 - [ ] T040 [US2] Implement check command handler in internal/version/check.go
 - [ ] T041 [US2] Add --json, --fix, --detailed flags to check command
 - [ ] T042 [US2] Implement text output formatter for compatibility report in internal/version/check.go
