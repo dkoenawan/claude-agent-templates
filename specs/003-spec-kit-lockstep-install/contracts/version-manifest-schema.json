@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/dkoenawan/claude-agent-templates/schemas/version-manifest.json",
+  "title": "Version Manifest Schema",
+  "description": "Specification for version-manifest.json file that defines pinned spec-kit version and compatibility constraints",
+  "type": "object",
+  "required": [
+    "version",
+    "name",
+    "dependencies"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Manifest schema version (major.minor)",
+      "examples": ["1.0", "2.1"]
+    },
+    "name": {
+      "type": "string",
+      "const": "claude-agent-templates",
+      "description": "Project name (must be 'claude-agent-templates')"
+    },
+    "dependencies": {
+      "type": "object",
+      "required": ["spec-kit"],
+      "properties": {
+        "spec-kit": {
+          "type": "object",
+          "required": [
+            "version",
+            "source",
+            "install_path"
+          ],
+          "properties": {
+            "version": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+              "description": "Pinned spec-kit version using semantic versioning (major.minor.patch)",
+              "examples": ["0.0.72", "1.2.3"]
+            },
+            "source": {
+              "type": "string",
+              "enum": ["vendored", "git", "npm"],
+              "description": "Distribution method for spec-kit",
+              "default": "vendored"
+            },
+            "install_path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Relative path from repository root where spec-kit is installed",
+              "examples": [".specify", "vendor/spec-kit"]
+            },
+            "integrity": {
+              "type": "string",
+              "pattern": "^sha256-[a-f0-9]{64}$",
+              "description": "SHA-256 hash of spec-kit files for integrity verification",
+              "examples": ["sha256-abc123def456..."]
+            },
+            "compatibility": {
+              "type": "object",
+              "description": "Version compatibility constraints",
+              "properties": {
+                "min_version": {
+                  "type": "string",
+                  "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+                  "description": "Minimum compatible spec-kit version (inclusive)"
+                },
+                "max_version": {
+                  "type": "string",
+                  "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+                  "description": "Maximum compatible spec-kit version (inclusive)"
+                },
+                "breaking_versions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+                  },
+                  "uniqueItems": true,
+                  "description": "List of known breaking versions to avoid",
+                  "examples": [["0.0.65", "0.0.71"]]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "update_policy": {
+      "type": "string",
+      "enum": ["manual", "patch", "minor"],
+      "description": "Automatic update strategy: 'manual' (no auto-update), 'patch' (auto-update patches), 'minor' (auto-update minor versions)",
+      "default": "manual"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO 8601 date of last manifest update (YYYY-MM-DD)",
+      "examples": ["2025-10-22", "2024-12-31"]
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "version": "1.0",
+      "name": "claude-agent-templates",
+      "dependencies": {
+        "spec-kit": {
+          "version": "0.0.72",
+          "source": "vendored",
+          "install_path": ".specify",
+          "integrity": "sha256-abc123def456789012345678901234567890123456789012345678901234",
+          "compatibility": {
+            "min_version": "0.0.70",
+            "max_version": "0.1.0",
+            "breaking_versions": []
+          }
+        }
+      },
+      "update_policy": "manual",
+      "last_updated": "2025-10-22"
+    }
+  ]
+}

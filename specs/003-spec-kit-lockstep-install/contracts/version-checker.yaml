@@ -1,0 +1,558 @@
+# Contract: Version Checker Script (scripts/check-version.sh)
+# Purpose: Verify spec-kit version compatibility and report status
+
+name: check-version.sh
+type: bash_script
+version: 1.0
+
+description: >
+  Checks installed spec-kit version against version manifest requirements.
+  Reports compatibility status, conflicts, and available upgrades.
+
+## Interface
+
+### Command Line
+
+```bash
+# Usage
+./scripts/check-version.sh [OPTIONS]
+
+# Examples
+./scripts/check-version.sh                    # Check compatibility, human-readable output
+./scripts/check-version.sh --json             # JSON output for programmatic use
+./scripts/check-version.sh --fix              # Automatically fix version conflicts
+./scripts/check-version.sh --detailed         # Show detailed version information
+```
+
+### Options
+
+options:
+  --json:
+    description: Output results in JSON format
+    type: boolean
+    default: false
+
+  --fix:
+    description: Automatically upgrade/downgrade to resolve conflicts
+    type: boolean
+    default: false
+
+  --detailed:
+    description: Show detailed version information and history
+    type: boolean
+    default: false
+
+  --quiet:
+    description: Only output errors (exit code indicates status)
+    type: boolean
+    default: false
+
+  --help, -h:
+    description: Show help message
+    type: boolean
+
+### Exit Codes
+
+exit_codes:
+  0: Versions compatible
+  1: General error
+  2: Invalid arguments
+  3: Version conflict detected
+  4: Version manifest not found
+  5: Version lock not found (not installed)
+  6: Integrity verification failed
+
+### Environment Variables
+
+environment:
+  INSTALL_DIR:
+    description: Installation directory to check
+    default: ~/.claude-agent-templates
+
+## Functional Requirements
+
+requirements:
+  FR-001:
+    description: Read and parse version manifest
+    acceptance:
+      - Load .specify/version-manifest.json
+      - Extract spec-kit version requirement
+      - Extract compatibility constraints
+      - Validate JSON schema
+
+  FR-002:
+    description: Read and parse version lock
+    acceptance:
+      - Load ~/.claude-agent-templates/.version-lock.json
+      - Extract installed spec-kit version
+      - Validate JSON schema
+
+  FR-003:
+    description: Compare versions using semantic versioning
+    acceptance:
+      - Parse version strings (major.minor.patch)
+      - Compare using semver rules
+      - Support version ranges
+
+  FR-004:
+    description: Check compatibility constraints
+    acceptance:
+      - Verify version >= min_version
+      - Verify version <= max_version
+      - Check against breaking_versions list
+
+  FR-005:
+    description: Report compatibility status
+    acceptance:
+      - Human-readable text output (default)
+      - JSON output (--json flag)
+      - Detailed mode (--detailed flag)
+      - Quiet mode (--quiet flag)
+
+## Data Flows
+
+### Input Data
+
+inputs:
+  - source: .specify/version-manifest.json
+    description: Required spec-kit version and constraints
+    format: JSON
+    schema: See data-model.md Version Manifest
+
+  - source: ~/.claude-agent-templates/.version-lock.json
+    description: Installed spec-kit version
+    format: JSON
+    schema: See data-model.md Version Lock
+
+### Output Data
+
+outputs:
+  - destination: stdout
+    description: Compatibility status report
+    format: Text or JSON (based on --json flag)
+
+  - destination: stderr
+    description: Error messages
+    format: Text
+
+## Output Formats
+
+### Text Output (Default)
+
+```
+Spec-Kit Version Compatibility Check
+
+Installed Version:   0.0.72
+Required Version:    0.0.72
+Compatible Range:    0.0.70 - 0.1.0
+
+Status: ✅ COMPATIBLE
+
+All versions match requirements.
+```
+
+### JSON Output (--json)
+
+```json
+{
+  "status": "compatible",
+  "installed_version": "0.0.72",
+  "required_version": "0.0.72",
+  "compatibility": {
+    "min_version": "0.0.70",
+    "max_version": "0.1.0",
+    "in_range": true,
+    "is_breaking": false
+  },
+  "recommendations": []
+}
+```
+
+### Detailed Output (--detailed)
+
+```
+Spec-Kit Version Compatibility Check
+
+═══════════════════════════════════════════════════════
+
+Installed Version Information:
+  Version:           0.0.72
+  Installed From:    vendored
+  Install Path:      /home/user/.claude-agent-templates/.specify
+  Installed At:      2025-10-22T12:00:00Z
+  Last Verified:     2025-10-22T12:00:00Z
+
+Required Version Information:
+  Version:           0.0.72
+  Source:            vendored
+  Integrity Hash:    sha256-abc123...
+
+Compatibility Constraints:
+  Minimum Version:   0.0.70
+  Maximum Version:   0.1.0
+  Breaking Versions: (none)
+
+Installation History (last 3 entries):
+  [2025-10-22 12:00:00] install     claude-agent-templates v1.0.0
+  [2025-10-21 10:30:00] verify      spec-kit v0.0.72
+  [2025-10-20 15:45:00] upgrade     spec-kit v0.0.68 → v0.0.72
+
+═══════════════════════════════════════════════════════
+
+Status: ✅ COMPATIBLE
+
+All versions match requirements.
+```
+
+### Error Output (Version Conflict)
+
+```
+Spec-Kit Version Compatibility Check
+
+Installed Version:   0.0.68
+Required Version:    0.0.72
+Compatible Range:    0.0.70 - 0.1.0
+
+Status: ❌ INCOMPATIBLE
+
+Issue: Installed version (0.0.68) is below minimum required version (0.0.70)
+
+Recommendations:
+  1. Run: ./scripts/install.sh --upgrade
+  2. Or manually update spec-kit to version 0.0.72
+
+Exit code: 3
+```
+
+### JSON Error Output
+
+```json
+{
+  "status": "incompatible",
+  "installed_version": "0.0.68",
+  "required_version": "0.0.72",
+  "compatibility": {
+    "min_version": "0.0.70",
+    "max_version": "0.1.0",
+    "in_range": false,
+    "is_breaking": false
+  },
+  "error": {
+    "code": 3,
+    "message": "Installed version (0.0.68) is below minimum required version (0.0.70)",
+    "category": "version_too_old"
+  },
+  "recommendations": [
+    "Run: ./scripts/install.sh --upgrade",
+    "Or manually update spec-kit to version 0.0.72"
+  ]
+}
+```
+
+## Error Handling
+
+errors:
+  manifest_not_found:
+    condition: .specify/version-manifest.json does not exist
+    action: Display error, suggest re-cloning repository
+    exit_code: 4
+
+  lock_not_found:
+    condition: ~/.claude-agent-templates/.version-lock.json does not exist
+    action: Display error, suggest running installation
+    exit_code: 5
+    example: |
+      ❌ ERROR: Installation not found
+
+        Version lock file missing: ~/.claude-agent-templates/.version-lock.json
+
+      Resolution:
+        Run: ./scripts/install.sh
+
+  version_conflict:
+    condition: Installed version incompatible with requirements
+    action: Display conflict details and recommendations
+    exit_code: 3
+
+  invalid_json:
+    condition: Manifest or lock file is not valid JSON
+    action: Display parse error, suggest file corruption
+    exit_code: 1
+
+## State Transitions
+
+states:
+  initial:
+    next: [parsing_arguments, showing_help]
+
+  parsing_arguments:
+    actions:
+      - Parse command line options
+      - Set output format (text/json)
+      - Set verbosity level
+    next: [loading_manifest, error]
+
+  loading_manifest:
+    actions:
+      - Read .specify/version-manifest.json
+      - Parse JSON
+      - Extract required spec-kit version
+      - Extract compatibility constraints
+    next: [loading_lock, manifest_error]
+
+  loading_lock:
+    actions:
+      - Read version lock file
+      - Parse JSON
+      - Extract installed spec-kit version
+    next: [comparing_versions, lock_error]
+
+  comparing_versions:
+    actions:
+      - Parse version strings
+      - Compare using semver logic
+      - Check min/max range
+      - Check breaking versions list
+    next: [compatible, incompatible]
+
+  compatible:
+    actions:
+      - Generate success output (text or JSON)
+      - Update last_verified timestamp in lock
+    exit_code: 0
+
+  incompatible:
+    actions:
+      - Generate error output (text or JSON)
+      - Include recommendations
+      - If --fix flag, trigger upgrade
+    exit_code: 3
+    next: [fixing, exit] (if --fix)
+
+  fixing:
+    actions:
+      - Call install.sh --upgrade
+      - Report fix status
+    next: [compatible, error]
+
+  manifest_error:
+    actions:
+      - Display manifest error
+    exit_code: 4
+
+  lock_error:
+    actions:
+      - Display lock error
+    exit_code: 5
+
+  error:
+    actions:
+      - Display general error
+    exit_code: 1
+
+## Testing Contract
+
+tests:
+  unit:
+    - name: test_version_parsing
+      description: Parse semantic version strings
+      inputs:
+        - "0.0.72" -> {major: 0, minor: 0, patch: 72}
+        - "1.2.3" -> {major: 1, minor: 2, patch: 3}
+        - "invalid" -> error
+      expected: Correct parsing or error
+
+    - name: test_version_comparison
+      description: Compare two semantic versions
+      inputs:
+        - compare("0.0.72", "0.0.70") -> greater
+        - compare("0.0.68", "0.0.72") -> less
+        - compare("0.0.72", "0.0.72") -> equal
+      expected: Correct comparison results
+
+    - name: test_range_check
+      description: Check if version is within range
+      inputs:
+        - in_range("0.0.72", "0.0.70", "0.1.0") -> true
+        - in_range("0.0.68", "0.0.70", "0.1.0") -> false
+        - in_range("0.2.0", "0.0.70", "0.1.0") -> false
+      expected: Correct range checking
+
+  integration:
+    - name: test_compatible_versions
+      description: Check compatible installation
+      setup:
+        - Install spec-kit v0.0.72
+        - Manifest requires v0.0.72
+      actions:
+        - Run ./scripts/check-version.sh
+      expected:
+        - Text output shows "COMPATIBLE"
+        - Exit code 0
+
+    - name: test_incompatible_versions
+      description: Detect version conflict
+      setup:
+        - Install spec-kit v0.0.68
+        - Manifest requires v0.0.72
+      actions:
+        - Run ./scripts/check-version.sh
+      expected:
+        - Text output shows "INCOMPATIBLE"
+        - Exit code 3
+        - Recommendations displayed
+
+    - name: test_json_output
+      description: Verify JSON output format
+      setup:
+        - Install spec-kit v0.0.72
+      actions:
+        - Run ./scripts/check-version.sh --json
+      expected:
+        - Valid JSON output
+        - Contains all required fields
+        - Exit code 0
+
+    - name: test_auto_fix
+      description: Automatically fix version conflict
+      setup:
+        - Install spec-kit v0.0.68
+        - Manifest requires v0.0.72
+      actions:
+        - Run ./scripts/check-version.sh --fix
+      expected:
+        - Upgrade triggered
+        - New version installed
+        - Exit code 0 (after fix)
+
+    - name: test_missing_installation
+      description: Handle missing installation
+      setup:
+        - Remove version lock file
+      actions:
+        - Run ./scripts/check-version.sh
+      expected:
+        - Error message about missing installation
+        - Exit code 5
+
+## Dependencies
+
+internal:
+  - .specify/version-manifest.json: Version requirements
+  - ~/.claude-agent-templates/.version-lock.json: Installation state
+  - ./scripts/install.sh: Called by --fix option
+
+external:
+  - bash 4.0+: Shell interpreter
+  - jq: JSON parsing and manipulation
+
+## Performance Requirements
+
+performance:
+  execution_time:
+    check: < 1 second
+    check_with_fix: < 60 seconds (includes upgrade)
+
+  resource_usage:
+    memory: < 5 MB
+    disk_io: Minimal (read 2 JSON files)
+
+## Security Considerations
+
+security:
+  validation:
+    - Validate JSON schemas before parsing
+    - Sanitize version strings (prevent injection)
+    - Validate file paths
+
+  permissions:
+    - Read-only access to manifest and lock files
+    - Write access to lock file (update last_verified)
+
+## Examples
+
+### Example 1: Compatible Versions
+
+```bash
+$ ./scripts/check-version.sh
+
+Spec-Kit Version Compatibility Check
+
+Installed Version:   0.0.72
+Required Version:    0.0.72
+Compatible Range:    0.0.70 - 0.1.0
+
+Status: ✅ COMPATIBLE
+
+$ echo $?
+0
+```
+
+### Example 2: Version Conflict
+
+```bash
+$ ./scripts/check-version.sh
+
+Spec-Kit Version Compatibility Check
+
+Installed Version:   0.0.68
+Required Version:    0.0.72
+Compatible Range:    0.0.70 - 0.1.0
+
+Status: ❌ INCOMPATIBLE
+
+Issue: Installed version (0.0.68) is below minimum required version (0.0.70)
+
+Recommendations:
+  1. Run: ./scripts/install.sh --upgrade
+
+$ echo $?
+3
+```
+
+### Example 3: JSON Output
+
+```bash
+$ ./scripts/check-version.sh --json | jq .
+{
+  "status": "compatible",
+  "installed_version": "0.0.72",
+  "required_version": "0.0.72",
+  "compatibility": {
+    "min_version": "0.0.70",
+    "max_version": "0.1.0",
+    "in_range": true,
+    "is_breaking": false
+  },
+  "recommendations": []
+}
+```
+
+### Example 4: Auto-Fix
+
+```bash
+$ ./scripts/check-version.sh --fix
+
+Spec-Kit Version Compatibility Check
+
+Installed Version:   0.0.68
+Required Version:    0.0.72
+Compatible Range:    0.0.70 - 0.1.0
+
+Status: ❌ INCOMPATIBLE
+Issue: Version too old
+
+🔧 Auto-fixing version conflict...
+
+📦 Upgrading spec-kit...
+  ✓ Backing up current installation
+  ✓ Installing spec-kit v0.0.72
+  ✓ Verifying integrity
+  ✓ Updating version lock
+
+✅ Fix complete! Versions now compatible.
+```
+
+---
+
+**Status**: ✅ Version checker contract complete

@@ -1,0 +1,553 @@
+# Contract: Go CLI Tool (spec-kit-agents)
+# Purpose: Cross-platform binary for installing and managing spec-kit-agents with version lockstep
+
+name: spec-kit-agents
+type: go_binary_cli
+version: 1.0
+
+description: >
+  Cross-platform CLI tool for managing spec-kit-agents installation, version compatibility,
+  and Claude Code integration. Distributed as compiled binaries via GitHub Releases.
+
+## Commands
+
+### install
+
+**Purpose**: Install spec-kit-agents in current project or globally
+
+```bash
+spec-kit-agents install [OPTIONS]
+```
+
+**Options**:
+```yaml
+--prefix <directory>:
+  description: Installation directory (default: auto-detect based on existing .specify/)
+  type: string
+  default: "." (or ".claude-agent-templates" if .specify/ exists)
+
+--global:
+  description: Install agents globally to ~/.claude/agents/
+  type: boolean
+  default: false
+
+--force:
+  description: Force installation even if version conflicts detected
+  type: boolean
+  default: false
+
+--quiet:
+  description: Suppress non-error output
+  type: boolean
+  default: false
+
+--skip-claude-integration:
+  description: Skip creating .claude/ directory structure
+  type: boolean
+  default: false
+```
+
+**Exit Codes**:
+```yaml
+0: Installation successful
+1: General error
+2: Invalid arguments
+3: Version conflict detected (use --force to override)
+4: Permission denied
+5: Disk space insufficient
+```
+
+**Behavior**:
+1. Detect existing `.specify/` directory
+2. Determine installation prefix (auto or user-specified)
+3. Copy spec-kit files from vendored source
+4. Create `.claude/` structure with namespaced files
+5. Generate version lock file
+6. Verify installation integrity
+7. Report success with installed versions
+
+**Output Example**:
+```
+🔍 Detecting existing installation...
+  ✓ No .specify/ directory found
+
+📦 Installing spec-kit-agents...
+  Installation prefix: .
+  ✓ Copying spec-kit v0.0.72 (vendored)
+  ✓ Creating .claude/ directory structure
+  ✓ Copying commands with 'speckit.*' namespace
+  ✓ Copying agents with 'cat-' prefix
+  ✓ Creating version lock
+
+✅ Installation complete!
+
+Installed versions:
+  spec-kit-agents: v1.0.0
+  spec-kit: v0.0.72
+
+Commands available:
+  /speckit.specify - Create feature specification
+  /speckit.plan - Generate implementation plan
+  /speckit.tasks - Break down into tasks
+
+Agents available (use @ to invoke):
+  @cat-requirements-analyst
+  @cat-solution-architect-python
+  @cat-software-engineer-python
+  ... (15 more agents)
+```
+
+---
+
+### check
+
+**Purpose**: Check version compatibility between installed and required spec-kit
+
+```bash
+spec-kit-agents check [OPTIONS]
+```
+
+**Options**:
+```yaml
+--json:
+  description: Output results in JSON format
+  type: boolean
+  default: false
+
+--fix:
+  description: Automatically fix version conflicts by upgrading
+  type: boolean
+  default: false
+
+--detailed:
+  description: Show detailed version information and history
+  type: boolean
+  default: false
+```
+
+**Exit Codes**:
+```yaml
+0: Versions compatible
+1: General error
+3: Version conflict detected
+4: Version manifest not found
+5: Installation not found
+```
+
+**Output Example (Compatible)**:
+```
+Spec-Kit Version Compatibility Check
+
+Installed Version:   0.0.72
+Required Version:    0.0.72
+Compatible Range:    0.0.70 - 0.1.0
+
+Status: ✅ COMPATIBLE
+
+All versions match requirements.
+```
+
+**Output Example (Conflict)**:
+```
+Spec-Kit Version Compatibility Check
+
+Installed Version:   0.0.68
+Required Version:    0.0.72
+Compatible Range:    0.0.70 - 0.1.0
+
+Status: ❌ INCOMPATIBLE
+
+Issue: Installed version (0.0.68) is below minimum required version (0.0.70)
+
+Recommendations:
+  1. Run: spec-kit-agents update
+  2. Or: spec-kit-agents install --force
+
+Exit code: 3
+```
+
+**JSON Output**:
+```json
+{
+  "status": "compatible",
+  "installed_version": "0.0.72",
+  "required_version": "0.0.72",
+  "compatibility": {
+    "min_version": "0.0.70",
+    "max_version": "0.1.0",
+    "in_range": true,
+    "is_breaking": false
+  },
+  "recommendations": []
+}
+```
+
+---
+
+### update
+
+**Purpose**: Update spec-kit-agents to latest version
+
+```bash
+spec-kit-agents update [OPTIONS]
+```
+
+**Options**:
+```yaml
+--version <version>:
+  description: Update to specific version (default: latest)
+  type: string
+  default: "latest"
+
+--backup:
+  description: Create backup before updating (default: true)
+  type: boolean
+  default: true
+```
+
+**Exit Codes**:
+```yaml
+0: Update successful
+1: Update failed
+2: Already on latest version
+3: Specified version not found
+```
+
+**Behavior**:
+1. Check current version
+2. Fetch latest (or specified) version
+3. Create backup if enabled
+4. Download new version
+5. Replace files
+6. Update version lock
+7. Verify new installation
+
+---
+
+### status
+
+**Purpose**: Show installation status and configuration
+
+```bash
+spec-kit-agents status [OPTIONS]
+```
+
+**Options**:
+```yaml
+--json:
+  description: Output in JSON format
+  type: boolean
+  default: false
+```
+
+**Output Example**:
+```
+Spec-Kit Agents Installation Status
+
+Installation:
+  Prefix: .claude-agent-templates
+  Installed At: 2025-10-22 12:00:00 UTC
+  Last Verified: 2025-10-22 14:30:00 UTC
+  Installation ID: 550e8400-e29b-41d4-a716-446655440000
+
+Versions:
+  spec-kit-agents: v1.0.0
+  spec-kit: v0.0.72 (vendored)
+
+Integration:
+  .claude/commands/: 3 commands
+  .claude/agents/: 15 agents
+
+Compatibility: ✅ All versions compatible
+
+Recent History (last 3 operations):
+  [2025-10-22 12:00:00] install     spec-kit-agents v1.0.0
+  [2025-10-22 14:30:00] verify      spec-kit v0.0.72
+  [2025-10-22 15:00:00] check       compatibility check passed
+```
+
+---
+
+### version
+
+**Purpose**: Show spec-kit-agents version
+
+```bash
+spec-kit-agents version
+```
+
+**Output**:
+```
+spec-kit-agents v1.0.0
+Built: 2025-10-22T10:00:00Z
+Commit: abc1234567
+Go: go1.22.0 linux/amd64
+```
+
+---
+
+## Data Structures
+
+### Internal Models
+
+```go
+// pkg/models/manifest.go
+type Manifest struct {
+    Version      string                 `json:"version"`
+    Name         string                 `json:"name"`
+    Dependencies map[string]Dependency  `json:"dependencies"`
+    UpdatePolicy string                 `json:"update_policy"`
+    LastUpdated  string                 `json:"last_updated"`
+}
+
+type Dependency struct {
+    Version       string        `json:"version"`
+    Source        string        `json:"source"`
+    InstallPath   string        `json:"install_path"`
+    Integrity     string        `json:"integrity"`
+    Compatibility Compatibility `json:"compatibility"`
+}
+
+type Compatibility struct {
+    MinVersion       string   `json:"min_version"`
+    MaxVersion       string   `json:"max_version"`
+    BreakingVersions []string `json:"breaking_versions"`
+}
+```
+
+```go
+// pkg/models/lock.go
+type VersionLock struct {
+    Version        string               `json:"version"`
+    InstallationID string               `json:"installation_id"`
+    InstalledAt    string               `json:"installed_at"`
+    LastVerified   string               `json:"last_verified"`
+    Components     map[string]Component `json:"components"`
+    History        []HistoryEntry       `json:"history"`
+}
+
+type Component struct {
+    Version       string `json:"version"`
+    InstalledFrom string `json:"installed_from"`
+    Commit        string `json:"commit,omitempty"`
+    InstallPath   string `json:"install_path"`
+}
+
+type HistoryEntry struct {
+    Timestamp string `json:"timestamp"`
+    Action    string `json:"action"`
+    Component string `json:"component"`
+    Version   string `json:"version,omitempty"`
+    Status    string `json:"status"`
+    Error     string `json:"error,omitempty"`
+}
+```
+
+---
+
+## Key Functions
+
+### internal/install/install.go
+
+```go
+func Run(opts Options) error
+func detectPrefix(hasSpecKit bool, opts Options) string
+func copySpecKit(prefix string) error
+func setupClaudeDir(prefix string) error
+func createVersionLock(prefix string) *models.VersionLock
+func saveVersionLock(path string, lock *models.VersionLock) error
+func verifyInstallation(prefix string) error
+```
+
+### internal/version/check.go
+
+```go
+func CheckCompatibility(manifestPath, lockPath string) (*CompatibilityReport, error)
+func GenerateReport(report *CompatibilityReport, format string) (string, error)
+```
+
+### internal/version/compare.go
+
+```go
+func CompareVersions(v1, v2 string) (int, error)
+func InRange(version, minVer, maxVer string) (bool, error)
+func IsBreaking(version string, breakingVersions []string) bool
+```
+
+---
+
+## Error Handling
+
+### Error Types
+
+```go
+type InstallError struct {
+    Code    int
+    Message string
+    Err     error
+}
+
+const (
+    ErrGeneral           = 1
+    ErrInvalidArgs       = 2
+    ErrVersionConflict   = 3
+    ErrPermissionDenied  = 4
+    ErrDiskSpace         = 5
+)
+```
+
+### Error Messages
+
+**Version Conflict**:
+```
+❌ ERROR: Version conflict detected
+
+  Installed spec-kit: 0.0.68
+  Required version: 0.0.72
+  Compatible range: 0.0.70 - 0.1.0
+
+Resolution:
+  Run: spec-kit-agents update
+  Or: spec-kit-agents install --force
+
+Exit code: 3
+```
+
+**Permission Denied**:
+```
+❌ ERROR: Permission denied
+
+  Cannot create directory: /path/to/installation
+
+Resolution:
+  1. Check directory permissions: ls -la /path/to
+  2. Run with appropriate permissions
+  3. Or use --prefix to specify writable directory
+
+Exit code: 4
+```
+
+---
+
+## Testing
+
+### Unit Tests (Go)
+
+```go
+// internal/version/compare_test.go
+func TestCompareVersions(t *testing.T)
+func TestInRange(t *testing.T)
+func TestIsBreaking(t *testing.T)
+
+// internal/install/detect_test.go
+func TestDetectPrefix(t *testing.T)
+func TestHasSpecKit(t *testing.T)
+
+// pkg/models/manifest_test.go
+func TestManifestUnmarshal(t *testing.T)
+func TestManifestValidation(t *testing.T)
+```
+
+### Integration Tests (Bash)
+
+```bash
+# tests/integration/test_install.sh
+test_fresh_install()
+test_install_with_existing_specify()
+test_global_install()
+test_version_conflict()
+test_force_install()
+```
+
+---
+
+## Distribution
+
+### GitHub Releases
+
+**Build matrix**:
+- `linux-amd64`
+- `linux-arm64`
+- `darwin-amd64` (Intel Mac)
+- `darwin-arm64` (Apple Silicon)
+- `windows-amd64.exe`
+- `windows-arm64.exe`
+
+**Release naming**:
+```
+spec-kit-agents-v1.0.0-linux-amd64
+spec-kit-agents-v1.0.0-linux-arm64
+spec-kit-agents-v1.0.0-darwin-amd64
+spec-kit-agents-v1.0.0-darwin-arm64
+spec-kit-agents-v1.0.0-windows-amd64.exe
+spec-kit-agents-v1.0.0-windows-arm64.exe
+```
+
+### One-liner Installation
+
+**scripts/install.sh**:
+```bash
+#!/bin/bash
+# Downloads appropriate binary for OS/arch and installs to ~/.local/bin
+
+set -e
+
+VERSION="${1:-latest}"
+INSTALL_DIR="${HOME}/.local/bin"
+
+# Detect OS and architecture
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+ARCH=$(uname -m)
+case "$ARCH" in
+    x86_64) ARCH="amd64" ;;
+    aarch64|arm64) ARCH="arm64" ;;
+esac
+
+# Download and install
+BINARY_URL="https://github.com/yourusername/spec-kit-agents/releases/download/${VERSION}/spec-kit-agents-${OS}-${ARCH}"
+curl -fsSL "$BINARY_URL" -o "$INSTALL_DIR/spec-kit-agents"
+chmod +x "$INSTALL_DIR/spec-kit-agents"
+
+echo "✅ spec-kit-agents installed to $INSTALL_DIR"
+echo "Run: spec-kit-agents install"
+```
+
+---
+
+## Performance Requirements
+
+| Operation | Target | Notes |
+|-----------|--------|-------|
+| One-liner install | <60s | Includes download + binary install |
+| `install` command | <10s | File copy operations |
+| `check` command | <1s | JSON parsing + version comparison |
+| `update` command | <30s | Includes download |
+| `status` command | <1s | Read version lock |
+| Binary size | <10MB | Compressed for GitHub Release |
+
+---
+
+## Security
+
+### Binary Verification
+
+Users can verify binary integrity:
+```bash
+# Download checksum
+curl -fsSL https://github.com/yourusername/spec-kit-agents/releases/download/v1.0.0/checksums.txt
+
+# Verify
+sha256sum -c checksums.txt
+```
+
+### File Permissions
+
+```go
+// Set restrictive permissions
+os.WriteFile(path, data, 0644)  // Read-write owner, read-only others
+os.MkdirAll(dir, 0755)          // Executable dirs
+```
+
+---
+
+**Status**: ✅ Go CLI contract complete - replaces bash script contracts with single cross-platform binary
