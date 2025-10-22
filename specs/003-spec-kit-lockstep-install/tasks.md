@@ -30,10 +30,10 @@
 
 **Purpose**: Initialize Go project structure and tooling
 
-- [ ] T001 Initialize Go module in repository root with `go mod init github.com/yourusername/spec-kit-agents`
-- [ ] T002 Create directory structure per plan.md: cmd/spec-kit-agents/, internal/{install,version,config}/, pkg/models/, scripts/
-- [ ] T003 [P] Install Go dependencies: cobra, semver, uuid per go.mod
-- [ ] T004 [P] Create .gitignore for Go project (bin/, *.exe, go.sum initially)
+- [X] T001 Initialize Go module in repository root with `go mod init github.com/yourusername/spec-kit-agents`
+- [X] T002 Create directory structure per plan.md: cmd/spec-kit-agents/, internal/{install,version,config}/, pkg/models/, scripts/
+- [X] T003 [P] Install Go dependencies: cobra, semver, uuid per go.mod
+- [X] T004 [P] Create .gitignore for Go project (bin/, *.exe, go.sum initially)
 - [ ] T005 [P] Set up GitHub Actions workflow file .github/workflows/test.yml for running tests on push/PR
 
 ---
@@ -44,12 +44,12 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T006 [P] Create Version Manifest model in pkg/models/manifest.go with JSON schema validation
-- [ ] T007 [P] Create Version Lock model in pkg/models/lock.go with JSON schema validation
-- [ ] T008 [P] Implement semantic version comparison in internal/version/compare.go using semver library
-- [ ] T009 Create version manifest JSON file in .specify/version-manifest.json with spec-kit v0.0.72 pinned
-- [ ] T010 [P] Implement cross-platform path handling utilities in internal/config/paths.go
-- [ ] T011 [P] Create logging utility in internal/config/logger.go with levels (DEBUG, INFO, WARN, ERROR)
+- [X] T006 [P] Create Version Manifest model in pkg/models/manifest.go with JSON schema validation
+- [X] T007 [P] Create Version Lock model in pkg/models/lock.go with JSON schema validation
+- [X] T008 [P] Implement semantic version comparison in internal/version/compare.go using semver library
+- [X] T009 Create version manifest JSON file in .specify/version-manifest.json with spec-kit v0.0.72 pinned
+- [X] T010 [P] Implement cross-platform path handling utilities in internal/config/paths.go
+- [X] T011 [P] Create logging utility in internal/config/logger.go with levels (DEBUG, INFO, WARN, ERROR)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
