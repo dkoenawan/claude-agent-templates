@@ -126,25 +126,92 @@ cp agents/core/*.md ~/.claude/agents/
 cp agents/python/*.md ~/.claude/agents/
 ```
 
-### Updating and Managing Installation
+### How to Update
 
-The `spec-kit-agents` CLI provides comprehensive lifecycle management:
+Updates work at two levels - the CLI tool and your project installations:
+
+#### Update Project Installation (Agents + Spec-Kit)
+
+When new agent templates or spec-kit versions are released:
 
 ```bash
-# Update to latest version (automatic backup included)
-spec-kit-agents update
+cd /path/to/your/project
 
-# Update to specific version
-spec-kit-agents update --version v1.2.0
-
-# Check for updates and compatibility
+# Check for updates
 spec-kit-agents check
 
-# Rollback to previous installation
+# Update to latest (from version manifest)
+spec-kit-agents update
+
+# Or update to specific version
+spec-kit-agents update --version v1.2.0
+```
+
+**What happens:**
+1. ✅ Automatic backup created
+2. ✅ Version compatibility checked
+3. ✅ Files updated (agents + spec-kit)
+4. ✅ Installation history recorded
+5. ⚠️ Auto-rollback if anything fails
+
+**Result:** Your `.claude-agent-templates/` directory updated with new versions.
+
+#### Update CLI Tool (spec-kit-agents binary)
+
+When new CLI features are released:
+
+```bash
+# Re-run one-liner (overwrites old binary)
+curl -fsSL https://raw.githubusercontent.com/dkoenawan/claude-agent-templates/main/scripts/install.sh | bash
+
+# Or rebuild from source
+git pull origin main
+go build -o bin/spec-kit-agents ./cmd/spec-kit-agents/
+sudo cp bin/spec-kit-agents /usr/local/bin/
+```
+
+**Note:** CLI updates don't affect existing project installations.
+
+#### Rollback After Update
+
+If update causes issues:
+
+```bash
+# Automatic rollback happens on failure
+# Manual rollback:
 spec-kit-agents rollback
 
-# View detailed installation info
+# Rollback to specific backup
+spec-kit-agents rollback --backup-id backup-20251023-143000
+
+# List available backups
+spec-kit-agents rollback --list
+```
+
+#### Check Status and History
+
+```bash
+# View current installation
+spec-kit-agents status
+
+# Detailed history
 spec-kit-agents status --detailed
+```
+
+**Example output:**
+```
+Installation Details:
+  Prefix: .claude-agent-templates
+  Mode: standalone
+
+Installed Components:
+  claude-agent-templates: v1.0.0
+  spec-kit: v0.0.72
+
+Installation History:
+  [2025-10-23] Initial installation
+    - claude-agent-templates v1.0.0
+    - spec-kit v0.0.72
 ```
 
 ### Key Features of spec-kit Lockstep Installation
