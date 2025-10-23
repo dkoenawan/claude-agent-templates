@@ -131,16 +131,16 @@
 #### Step 2: CLI Command
 
 - [X] T039 [US2] Add check command to cobra CLI in cmd/spec-kit-agents/main.go
-- [ ] T040 [US2] Implement check command handler in internal/version/check.go
-- [ ] T041 [US2] Add --json, --fix, --detailed flags to check command
-- [ ] T042 [US2] Implement text output formatter for compatibility report in internal/version/check.go
-- [ ] T043 [P] [US2] Implement JSON output formatter for compatibility report in internal/version/check.go
+- [X] T040 [US2] Implement check command handler in internal/version/check.go
+- [X] T041 [US2] Add --json, --fix, --detailed flags to check command
+- [X] T042 [US2] Implement text output formatter for compatibility report in internal/version/check.go
+- [X] T043 [P] [US2] Implement JSON output formatter for compatibility report in internal/version/check.go
 
 #### Step 3: Status Reporting
 
-- [ ] T044 [US2] Add status command to cobra CLI in cmd/spec-kit-agents/main.go
-- [ ] T045 [US2] Implement status command showing installation info and version history
-- [ ] T046 [US2] Add version command showing binary version, build time, commit hash
+- [X] T044 [US2] Add status command to cobra CLI in cmd/spec-kit-agents/main.go
+- [X] T045 [US2] Implement status command showing installation info and version history
+- [X] T046 [US2] Add version command showing binary version, build time, commit hash
 
 **Checkpoint**: User Story 2 complete - maintainers can manage versions, users can check compatibility
 
@@ -154,31 +154,31 @@
 
 ### Tests for User Story 3 (TDD)
 
-- [ ] T047 [P] [US3] Unit test for backup creation in internal/install/backup_test.go
-- [ ] T048 [P] [US3] Unit test for rollback logic in internal/install/rollback_test.go
-- [ ] T049 [US3] Integration test for upgrade in tests/integration/test_upgrade.sh
-- [ ] T050 [US3] Integration test for rollback on failure in tests/integration/test_rollback.sh
+- [X] T047 [P] [US3] Unit test for backup creation in internal/install/backup_test.go
+- [X] T048 [P] [US3] Unit test for rollback logic in internal/install/rollback_test.go
+- [X] T049 [US3] Integration test for upgrade in tests/integration/test_upgrade.sh
+- [X] T050 [US3] Integration test for rollback on failure in tests/integration/test_rollback.sh
 
 ### Implementation for User Story 3
 
 #### Step 1: Backup & Rollback
 
-- [ ] T051 [P] [US3] Implement installation backup in internal/install/backup.go
-- [ ] T052 [P] [US3] Implement rollback logic in internal/install/rollback.go
-- [ ] T053 [US3] Add EXIT trap for automatic rollback on failure in internal/install/install.go
+- [X] T051 [P] [US3] Implement installation backup in internal/install/backup.go
+- [X] T052 [P] [US3] Implement rollback logic in internal/install/rollback.go
+- [X] T053 [US3] Add EXIT trap for automatic rollback on failure in internal/install/install.go
 
 #### Step 2: Update Command
 
-- [ ] T054 [US3] Add update command to cobra CLI in cmd/spec-kit-agents/main.go
-- [ ] T055 [US3] Implement update command handler in internal/install/update.go
-- [ ] T056 [US3] Add --version, --backup flags to update command
-- [ ] T057 [US3] Implement version lock history appending in internal/version/lock.go
+- [X] T054 [US3] Add update command to cobra CLI in cmd/spec-kit-agents/main.go
+- [X] T055 [US3] Implement update command handler in internal/install/update.go
+- [X] T056 [US3] Add --version, --backup flags to update command
+- [X] T057 [US3] Implement version lock history appending in internal/version/lock.go
 
 #### Step 3: Conflict Resolution
 
-- [ ] T058 [US3] Implement version conflict detection in update workflow
-- [ ] T059 [US3] Add user prompts for conflict resolution (upgrade, keep, abort)
-- [ ] T060 [US3] Implement --fix flag for automatic conflict resolution in check command
+- [X] T058 [US3] Implement version conflict detection in update workflow
+- [X] T059 [US3] Add user prompts for conflict resolution (upgrade, keep, abort)
+- [X] T060 [US3] Implement --fix flag for automatic conflict resolution in check command
 
 **Checkpoint**: User Story 3 complete - full upgrade lifecycle with safety guarantees
 
@@ -188,11 +188,11 @@
 
 **Purpose**: Automate binary building and distribution
 
-- [ ] T061 Create GitHub Actions release workflow in .github/workflows/release.yml
-- [ ] T062 [P] Add build matrix for 6 platforms (linux/darwin/windows × amd64/arm64) to release.yml
-- [ ] T063 [P] Configure GoReleaser for binary distribution (optional, or use manual build)
-- [ ] T064 Add binary checksums generation to release workflow
-- [ ] T065 Create release documentation template in .github/RELEASE_TEMPLATE.md
+- [X] T061 Create GitHub Actions release workflow in .github/workflows/release.yml
+- [X] T062 [P] Add build matrix for 6 platforms (linux/darwin/windows × amd64/arm64) to release.yml
+- [X] T063 [P] Configure GoReleaser for binary distribution (optional, or use manual build)
+- [X] T064 Add binary checksums generation to release workflow
+- [X] T065 Create release documentation template in .github/RELEASE_TEMPLATE.md
 
 ---
 
@@ -200,10 +200,10 @@
 
 **Purpose**: Ensure installation works on all target platforms
 
-- [ ] T066 [P] Add ubuntu-latest runner to GitHub Actions test workflow
-- [ ] T067 [P] Add macos-latest runner to GitHub Actions test workflow
-- [ ] T068 [P] Add windows-latest runner with Git Bash to GitHub Actions test workflow
-- [ ] T069 Create integration test suite in tests/integration/test_all_platforms.sh
+- [X] T066 [P] Add ubuntu-latest runner to GitHub Actions test workflow
+- [X] T067 [P] Add macos-latest runner to GitHub Actions test workflow
+- [X] T068 [P] Add windows-latest runner with Git Bash to GitHub Actions test workflow
+- [X] T069 Create integration test suite in tests/integration/test_all_platforms.sh
 - [ ] T070 Test one-liner installer on fresh VM for each platform
 
 ---

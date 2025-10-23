@@ -25,6 +25,16 @@ var (
 	installGlobal bool
 	installForce  bool
 	installDryRun bool
+
+	// Update command flags
+	updateNoBackup  bool
+	updateForce     bool
+	updateSkipVerify bool
+
+	// Rollback command flags
+	rollbackBackupID string
+	rollbackList     bool
+	rollbackForce    bool
 )
 
 func main() {
@@ -117,12 +127,58 @@ version and reports any incompatibilities.`,
 	RunE: runCheck,
 }
 
+var updateCmd = &cobra.Command{
+	Use:   "update",
+	Short: "Update installation to latest version",
+	Long: `Update the installation to the latest version from the manifest.
+
+This command:
+  - Creates a backup of the current installation (unless --no-backup)
+  - Updates to the version specified in the manifest
+  - Automatically rolls back on failure
+  - Preserves installation history
+
+Examples:
+  # Update to latest version with automatic backup
+  spec-kit-agents update
+
+  # Update without creating backup
+  spec-kit-agents update --no-backup
+
+  # Force update even if versions match
+  spec-kit-agents update --force`,
+	RunE: runUpdate,
+}
+
+var rollbackCmd = &cobra.Command{
+	Use:   "rollback",
+	Short: "Rollback to a previous installation",
+	Long: `Rollback the installation to a previous state from backup.
+
+This command restores a previous installation from backup. By default,
+it restores the most recent backup. You can specify a backup ID to
+restore a specific backup.
+
+Examples:
+  # Rollback to latest backup
+  spec-kit-agents rollback
+
+  # Rollback to specific backup
+  spec-kit-agents rollback --backup-id=backup-20251022-120000
+
+  # List available backups
+  spec-kit-agents rollback --list`,
+	RunE: runRollback,
+}
+
 func init() {
 	// Add subcommands
 	rootCmd.AddCommand(installCmd)
 	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(checkCmd)
+	rootCmd.AddCommand(updateCmd)
+	rootCmd.AddCommand(rollbackCmd)
 
 	// Global flags
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
@@ -136,6 +192,18 @@ func init() {
 
 	// Status command flags
 	statusCmd.Flags().StringVar(&installPrefix, "prefix", "", "Installation prefix to check (default: auto-detect)")
+
+	// Update command flags
+	updateCmd.Flags().StringVar(&installPrefix, "prefix", "", "Installation prefix (default: auto-detect)")
+	updateCmd.Flags().BoolVar(&updateNoBackup, "no-backup", false, "Skip backup creation before update")
+	updateCmd.Flags().BoolVar(&updateForce, "force", false, "Force update even if versions match")
+	updateCmd.Flags().BoolVar(&updateSkipVerify, "skip-verify", false, "Skip version compatibility verification")
+
+	// Rollback command flags
+	rollbackCmd.Flags().StringVar(&installPrefix, "prefix", "", "Installation prefix (default: auto-detect)")
+	rollbackCmd.Flags().StringVar(&rollbackBackupID, "backup-id", "", "Specific backup to restore (default: latest)")
+	rollbackCmd.Flags().BoolVar(&rollbackList, "list", false, "List available backups")
+	rollbackCmd.Flags().BoolVar(&rollbackForce, "force", false, "Force rollback without confirmation")
 }
 
 func createLogger() (*config.Logger, error) {
@@ -316,4 +384,148 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	logger.Error("checker", "✗ Version incompatibility detected")
 	fmt.Println(result.GetIssuesText())
 	return fmt.Errorf("version compatibility check failed")
+}
+
+func runUpdate(cmd *cobra.Command, args []string) error {
+	logger, err := createLogger()
+	if err != nil {
+		return err
+	}
+	defer logger.Close()
+
+	// Determine prefix
+	prefix := installPrefix
+	if prefix == "" {
+		prefix = config.DetermineInstallPrefix()
+	}
+
+	// Prepare options
+	opts := install.UpdateOptions{
+		Backup:     !updateNoBackup,
+		Force:      updateForce,
+		SkipVerify: updateSkipVerify,
+	}
+
+	// Run update
+	result, err := install.Update(prefix, opts, logger)
+	if err != nil {
+		logger.Error("update", "Update failed: %v", err)
+		return err
+	}
+
+	if !result.Success {
+		return fmt.Errorf("update did not complete successfully")
+	}
+
+	// Display summary
+	fmt.Println()
+	fmt.Println("Update Summary")
+	fmt.Println("==============")
+	fmt.Printf("  Updated from: v%s\n", result.UpdatedFrom)
+	fmt.Printf("  Updated to:   v%s\n", result.UpdatedTo)
+	fmt.Printf("  Components:   %d\n", result.ComponentsUpdated)
+	if result.BackupCreated {
+		fmt.Printf("  Backup ID:    %s\n", result.BackupID)
+	}
+	fmt.Println()
+
+	if len(result.Warnings) > 0 {
+		fmt.Println("Warnings:")
+		for _, warning := range result.Warnings {
+			fmt.Printf("  - %s\n", warning)
+		}
+		fmt.Println()
+	}
+
+	return nil
+}
+
+func runRollback(cmd *cobra.Command, args []string) error {
+	logger, err := createLogger()
+	if err != nil {
+		return err
+	}
+	defer logger.Close()
+
+	// Determine prefix
+	prefix := installPrefix
+	if prefix == "" {
+		prefix = config.DetermineInstallPrefix()
+	}
+
+	// List backups if requested
+	if rollbackList {
+		backups, err := install.ListBackups(prefix)
+		if err != nil {
+			return fmt.Errorf("failed to list backups: %w", err)
+		}
+
+		if len(backups) == 0 {
+			fmt.Println("No backups found")
+			return nil
+		}
+
+		fmt.Printf("Available backups for %s:\n\n", prefix)
+		for i, backup := range backups {
+			fmt.Printf("%d. %s\n", i+1, backup.BackupID)
+			fmt.Printf("   Created: %s\n", backup.CreatedAt.Format("2006-01-02 15:04:05 UTC"))
+			fmt.Printf("   Path:    %s\n", backup.BackupPath)
+			fmt.Println()
+		}
+		return nil
+	}
+
+	// Check if rollback is possible
+	canRollback, message, err := install.CanRollback(prefix)
+	if err != nil {
+		return fmt.Errorf("failed to check rollback status: %w", err)
+	}
+
+	if !canRollback {
+		return fmt.Errorf("cannot rollback: %s", message)
+	}
+
+	// Confirm rollback if not forced
+	if !rollbackForce && !quiet {
+		fmt.Printf("This will rollback your installation.\n")
+		fmt.Printf("%s\n\n", message)
+		fmt.Print("Are you sure you want to continue? (yes/no): ")
+
+		var response string
+		fmt.Scanln(&response)
+
+		if response != "yes" && response != "y" {
+			fmt.Println("Rollback cancelled")
+			return nil
+		}
+	}
+
+	// Prepare options
+	opts := install.RollbackOptions{
+		BackupID: rollbackBackupID,
+		Force:    rollbackForce,
+	}
+
+	// Run rollback
+	result, err := install.Rollback(prefix, opts, logger)
+	if err != nil {
+		logger.Error("rollback", "Rollback failed: %v", err)
+		return err
+	}
+
+	if !result.Success {
+		return fmt.Errorf("rollback did not complete successfully")
+	}
+
+	// Display summary
+	fmt.Println()
+	fmt.Println("Rollback Summary")
+	fmt.Println("================")
+	fmt.Printf("  Restored from:   %s\n", result.RestoredFromID)
+	fmt.Printf("  Previous version: v%s\n", result.PreviousVersion)
+	fmt.Printf("  Restored version: v%s\n", result.RestoredVersion)
+	fmt.Printf("  Components:       %d\n", result.ComponentsRestored)
+	fmt.Println()
+
+	return nil
 }
