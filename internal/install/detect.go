@@ -16,7 +16,7 @@ func DetectExistingInstallation() bool {
 
 // DetermineInstallPrefix determines where to install based on existing setup
 // Returns:
-//   - ".claude-agent-templates" if .specify/ exists (coexist mode)
+//   - "spec-kit-agents" if .specify/ exists (coexist mode)
 //   - "." if no .specify/ exists (standalone mode)
 func DetermineInstallPrefix() string {
 	return config.DetermineInstallPrefix()

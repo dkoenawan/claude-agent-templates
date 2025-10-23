@@ -11,8 +11,8 @@ import (
 func CreateVersionLock(templatesVersion, specKitVersion, installPath string) *models.VersionLock {
 	lock := models.NewVersionLock()
 
-	// Set claude-agent-templates component
-	lock.SetComponent("claude-agent-templates", models.Component{
+	// Set spec-kit-agents component
+	lock.SetComponent("spec-kit-agents", models.Component{
 		Version:       templatesVersion,
 		InstalledFrom: "git",
 		InstallPath:   installPath,
@@ -60,9 +60,9 @@ func GetInstalledSpecKitVersion(lock *models.VersionLock) (string, error) {
 // UpdateVersionLock updates an existing version lock with new installation info
 func UpdateVersionLock(lock *models.VersionLock, templatesVersion, specKitVersion string) {
 	// Update components
-	if comp, err := lock.GetComponent("claude-agent-templates"); err == nil {
+	if comp, err := lock.GetComponent("spec-kit-agents"); err == nil {
 		comp.Version = templatesVersion
-		lock.SetComponent("claude-agent-templates", *comp)
+		lock.SetComponent("spec-kit-agents", *comp)
 	}
 
 	if comp, err := lock.GetComponent("spec-kit"); err == nil {

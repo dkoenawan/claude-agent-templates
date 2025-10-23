@@ -86,9 +86,9 @@ func Run(opts Options, logger *config.Logger) (*InstallationResult, error) {
 		return nil, fmt.Errorf("failed to get spec-kit version: %w", err)
 	}
 	result.SpecKitVersion = specKitVersion
-	result.TemplatesVersion = "1.0.0" // TODO: Get from git tag or version file
+	result.TemplatesVersion = "2.0.0" // TODO: Get from git tag or version file
 
-	logger.Info("installer", "Installing claude-agent-templates v%s with spec-kit v%s",
+	logger.Info("installer", "Installing spec-kit-agents v%s with spec-kit v%s",
 		result.TemplatesVersion, result.SpecKitVersion)
 
 	if opts.DryRun {
@@ -151,7 +151,7 @@ func Run(opts Options, logger *config.Logger) (*InstallationResult, error) {
 	logger.Info("installer", "")
 	logger.Info("installer", "Installation Summary:")
 	logger.Info("installer", "  Location: %s", paths.Prefix)
-	logger.Info("installer", "  claude-agent-templates: v%s", result.TemplatesVersion)
+	logger.Info("installer", "  spec-kit-agents: v%s", result.TemplatesVersion)
 	logger.Info("installer", "  spec-kit: v%s", result.SpecKitVersion)
 	logger.Info("installer", "  Files installed: %d", result.FilesInstalled)
 	logger.Info("installer", "  Agents available: %d (prefix: cat-)", claudeResult.AgentsCopied)
@@ -188,8 +188,8 @@ func VerifyInstallation(paths *InstallationPaths) error {
 	}
 
 	// Verify lock has required components
-	if _, err := lock.GetComponent("claude-agent-templates"); err != nil {
-		return fmt.Errorf("version lock missing claude-agent-templates component: %w", err)
+	if _, err := lock.GetComponent("spec-kit-agents"); err != nil {
+		return fmt.Errorf("version lock missing spec-kit-agents component: %w", err)
 	}
 
 	if _, err := lock.GetComponent("spec-kit"); err != nil {
@@ -206,7 +206,7 @@ func VerifyInstallation(paths *InstallationPaths) error {
 
 // Uninstall removes an installation
 func Uninstall(prefix string, logger *config.Logger) error {
-	logger.Warn("uninstall", "Uninstalling claude-agent-templates from %s", prefix)
+	logger.Warn("uninstall", "Uninstalling spec-kit-agents from %s", prefix)
 
 	// TODO: Implement uninstallation
 	// - Remove .specify/ directory
@@ -261,7 +261,7 @@ func GetStatus(prefix string) (*InstallationStatus, error) {
 	status.HistoryEntryCount = len(lock.History)
 
 	// Get component versions
-	if comp, err := lock.GetComponent("claude-agent-templates"); err == nil {
+	if comp, err := lock.GetComponent("spec-kit-agents"); err == nil {
 		status.TemplatesVersion = comp.Version
 	}
 

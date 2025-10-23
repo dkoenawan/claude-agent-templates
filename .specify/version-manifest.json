@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "name": "claude-agent-templates",
+  "name": "spec-kit-agents",
   "dependencies": {
     "spec-kit": {
       "version": "0.0.72",
@@ -15,5 +15,5 @@
     }
   },
   "update_policy": "manual",
-  "last_updated": "2025-10-22"
+  "last_updated": "2025-10-23"
 }

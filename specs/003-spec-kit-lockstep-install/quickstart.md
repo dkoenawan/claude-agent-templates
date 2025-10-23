@@ -32,7 +32,7 @@ That's it! Everything is automatically configured.
 When you run `spec-kit-agents install`, the tool:
 
 1. ✅ **Detects installation mode** - Checks if you have existing `.specify/` directory
-2. ✅ **Chooses installation prefix** - Uses `.claude-agent-templates/` to avoid conflicts
+2. ✅ **Chooses installation prefix** - Uses `spec-kit-agents/` to avoid conflicts
 3. ✅ **Copies spec-kit files** - Installs pinned spec-kit version (v0.0.72)
 4. ✅ **Sets up Claude integration** - Creates `.claude/agents/` and `.claude/commands/`
 5. ✅ **Creates version lock** - Records installation for version tracking
@@ -48,11 +48,11 @@ The installer automatically detects and chooses the best mode:
 
 ### Mode 1: Fresh Installation
 **Scenario**: No existing `.specify/` directory
-**Action**: Installs to `.claude-agent-templates/` (clean, isolated)
+**Action**: Installs to `spec-kit-agents/` (clean, isolated)
 
 ### Mode 2: Coexist with Existing Spec-Kit
 **Scenario**: You already have `.specify/` directory
-**Action**: Installs to `.claude-agent-templates/` (both versions coexist)
+**Action**: Installs to `spec-kit-agents/` (both versions coexist)
 
 ### Mode 3: Global Installation
 **Scenario**: You want agents available across all projects
@@ -107,7 +107,7 @@ spec-kit-agents status
 **Expected Output**:
 ```
 Installation Details:
-  Prefix: .claude-agent-templates
+  Prefix: spec-kit-agents
   Mode: standalone
 
 Installed Components:
@@ -179,7 +179,7 @@ After installation, all agents and commands are immediately available:
 ### Project Structure After Installation
 ```
 your-project/
-├── .claude-agent-templates/        # Installation directory
+├── spec-kit-agents/        # Installation directory
 │   ├── .specify/                   # Pinned spec-kit (v0.0.72)
 │   ├── agents/                     # Agent specifications
 │   └── .version-lock.json          # Version tracking
@@ -262,7 +262,7 @@ spec-kit-agents install --verbose
 spec-kit-agents install --force
 
 # Check logs
-cat ~/.claude-agent-templates/.install-log.txt
+cat ~/spec-kit-agents/.install-log.txt
 ```
 
 ### Commands Not Found
@@ -308,7 +308,7 @@ To remove claude-agent-templates:
 
 ```bash
 # Remove installation directory
-rm -rf .claude-agent-templates
+rm -rf spec-kit-agents
 
 # Remove Claude integration (optional)
 rm -rf .claude/agents

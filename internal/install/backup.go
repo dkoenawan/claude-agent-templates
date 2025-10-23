@@ -51,7 +51,7 @@ func CreateBackup(installPath string, logger *config.Logger) (*BackupInfo, error
 		OriginalPath:  installPath,
 		CreatedAt:     time.Now().UTC(),
 		BackupID:      backupID,
-		ComponentName: "claude-agent-templates",
+		ComponentName: "spec-kit-agents",
 	}
 
 	logger.Success("backup", "Backup created: %s", backupPath)
@@ -146,7 +146,7 @@ func ListBackups(installPath string) ([]*BackupInfo, error) {
 				OriginalPath:  installPath,
 				CreatedAt:     info.ModTime(),
 				BackupID:      backupID,
-				ComponentName: "claude-agent-templates",
+				ComponentName: "spec-kit-agents",
 			})
 		}
 	}

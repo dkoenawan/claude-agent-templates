@@ -78,7 +78,7 @@ spec-kit-agents install --dry-run
 **Expected output from `spec-kit-agents status`:**
 ```
 Installation Details:
-  Prefix: .claude-agent-templates
+  Prefix: spec-kit-agents
   Mode: standalone
 
 Installed Components:
@@ -154,7 +154,7 @@ spec-kit-agents update --version v1.2.0
 4. ✅ Installation history recorded
 5. ⚠️ Auto-rollback if anything fails
 
-**Result:** Your `.claude-agent-templates/` directory updated with new versions.
+**Result:** Your `spec-kit-agents/` directory updated with new versions.
 
 #### Update CLI Tool (spec-kit-agents binary)
 
@@ -201,7 +201,7 @@ spec-kit-agents status --detailed
 **Example output:**
 ```
 Installation Details:
-  Prefix: .claude-agent-templates
+  Prefix: spec-kit-agents
   Mode: standalone
 
 Installed Components:
@@ -231,7 +231,7 @@ Installation History:
 **Installation Modes**
 - **Fresh**: New installation in clean environment
 - **Upgrade**: Update existing installation
-- **Coexist**: Install alongside existing spec-kit (uses `.claude-agent-templates/` prefix)
+- **Coexist**: Install alongside existing spec-kit (uses `spec-kit-agents/` prefix)
 
 ### 3. Use agents in Claude Code
 ```bash

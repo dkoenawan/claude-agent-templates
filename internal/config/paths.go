@@ -17,14 +17,14 @@ func GetHomeDir() (string, error) {
 }
 
 // GetDefaultInstallDir returns the default installation directory
-// Returns ~/.claude-agent-templates on Unix-like systems
-// Returns %USERPROFILE%\.claude-agent-templates on Windows
+// Returns ~/spec-kit-agents on Unix-like systems
+// Returns %USERPROFILE%\spec-kit-agents on Windows
 func GetDefaultInstallDir() (string, error) {
 	home, err := GetHomeDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".claude-agent-templates"), nil
+	return filepath.Join(home, "spec-kit-agents"), nil
 }
 
 // GetClaudeDir returns the Claude Code configuration directory
@@ -161,10 +161,10 @@ func DetectSpecifyDir() bool {
 }
 
 // DetermineInstallPrefix determines the installation prefix based on existing setup
-// Returns ".claude-agent-templates" if .specify/ exists, otherwise "."
+// Returns "spec-kit-agents" if .specify/ exists, otherwise "."
 func DetermineInstallPrefix() string {
 	if DetectSpecifyDir() {
-		return ".claude-agent-templates"
+		return "spec-kit-agents"
 	}
 	return "."
 }

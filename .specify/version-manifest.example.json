@@ -5,8 +5,8 @@
   "version": "1.0",
   "_comment_version": "Manifest schema version (not the software version). Current: 1.0",
 
-  "name": "claude-agent-templates",
-  "_comment_name": "Unique identifier for this project. Should match repository name.",
+  "name": "spec-kit-agents",
+  "_comment_name": "Product name for this project.",
 
   "dependencies": {
     "_comment_dependencies": "External dependencies with pinned versions for lockstep installation",

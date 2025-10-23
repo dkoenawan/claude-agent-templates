@@ -40,7 +40,7 @@ func Rollback(prefix string, opts RollbackOptions, logger *config.Logger) (*Roll
 		if err != nil {
 			logger.Warn("rollback", "Failed to load current version lock: %v", err)
 		} else {
-			if comp, err := lock.GetComponent("claude-agent-templates"); err == nil {
+			if comp, err := lock.GetComponent("spec-kit-agents"); err == nil {
 				result.PreviousVersion = comp.Version
 			}
 		}
@@ -89,7 +89,7 @@ func Rollback(prefix string, opts RollbackOptions, logger *config.Logger) (*Roll
 		if err != nil {
 			logger.Warn("rollback", "Failed to load restored version lock: %v", err)
 		} else {
-			if comp, err := lock.GetComponent("claude-agent-templates"); err == nil {
+			if comp, err := lock.GetComponent("spec-kit-agents"); err == nil {
 				result.RestoredVersion = comp.Version
 			}
 

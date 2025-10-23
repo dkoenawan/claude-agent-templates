@@ -52,9 +52,9 @@ func Update(prefix string, opts UpdateOptions, logger *config.Logger) (*UpdateRe
 	}
 
 	// Get current versions
-	currentTemplatesComp, err := currentLock.GetComponent("claude-agent-templates")
+	currentTemplatesComp, err := currentLock.GetComponent("spec-kit-agents")
 	if err != nil {
-		return nil, fmt.Errorf("failed to get current claude-agent-templates version: %w", err)
+		return nil, fmt.Errorf("failed to get current spec-kit-agents version: %w", err)
 	}
 	result.UpdatedFrom = currentTemplatesComp.Version
 
@@ -64,7 +64,7 @@ func Update(prefix string, opts UpdateOptions, logger *config.Logger) (*UpdateRe
 	}
 
 	logger.Info("update", "Current versions:")
-	logger.Info("update", "  claude-agent-templates: v%s", result.UpdatedFrom)
+	logger.Info("update", "  spec-kit-agents: v%s", result.UpdatedFrom)
 	logger.Info("update", "  spec-kit: v%s", currentSpecKitComp.Version)
 
 	// Load version manifest to get target version
@@ -78,11 +78,11 @@ func Update(prefix string, opts UpdateOptions, logger *config.Logger) (*UpdateRe
 		return nil, fmt.Errorf("failed to get target spec-kit version: %w", err)
 	}
 
-	targetTemplatesVersion := "1.0.0" // TODO: Get from git tag or version file
+	targetTemplatesVersion := "2.0.0" // TODO: Get from git tag or version file
 	result.UpdatedTo = targetTemplatesVersion
 
 	logger.Info("update", "Target versions:")
-	logger.Info("update", "  claude-agent-templates: v%s", targetTemplatesVersion)
+	logger.Info("update", "  spec-kit-agents: v%s", targetTemplatesVersion)
 	logger.Info("update", "  spec-kit: v%s", targetSpecKitVersion)
 
 	// Check if update is needed
