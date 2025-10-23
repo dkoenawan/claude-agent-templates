@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Version Manifest for Claude Agent Templates + Spec-Kit Lockstep Installation",
+
+  "version": "1.0",
+  "_comment_version": "Manifest schema version (not the software version). Current: 1.0",
+
+  "name": "claude-agent-templates",
+  "_comment_name": "Unique identifier for this project. Should match repository name.",
+
+  "dependencies": {
+    "_comment_dependencies": "External dependencies with pinned versions for lockstep installation",
+
+    "spec-kit": {
+      "_comment_spec-kit": "GitHub spec-kit dependency configuration",
+
+      "version": "0.0.72",
+      "_comment_version": "Pinned version - users always get this exact version. Update manually after testing compatibility.",
+
+      "source": "vendored",
+      "_comment_source": "Installation source. Options: 'vendored' (included in repo), 'github' (download from releases), 'npm' (package manager)",
+
+      "install_path": ".specify",
+      "_comment_install_path": "Where spec-kit files are located/installed relative to project root",
+
+      "integrity": "sha256-0000000000000000000000000000000000000000000000000000000000000000",
+      "_comment_integrity": "SHA-256 hash of spec-kit files for verification. Update when version changes. Use: shasum -a 256 file.tar.gz",
+
+      "compatibility": {
+        "_comment_compatibility": "Version compatibility constraints",
+
+        "min_version": "0.0.70",
+        "_comment_min_version": "Minimum compatible spec-kit version. Older versions will be rejected.",
+
+        "max_version": "0.1.0",
+        "_comment_max_version": "Maximum compatible spec-kit version. Newer versions will be rejected (prevents breaking changes).",
+
+        "breaking_versions": [],
+        "_comment_breaking_versions": "List of specific versions known to break compatibility (e.g., ['0.0.80', '0.0.85']). These will be rejected even if in range."
+      }
+    }
+  },
+
+  "update_policy": "manual",
+  "_comment_update_policy": "How version updates are handled. Options: 'manual' (maintainer updates version pin), 'auto-patch' (auto-update patch versions), 'auto-minor' (auto-update minor versions). Recommended: 'manual' for stability.",
+
+  "last_updated": "2025-10-22",
+  "_comment_last_updated": "Date when this manifest was last modified (YYYY-MM-DD format). Update when changing versions."
+}
