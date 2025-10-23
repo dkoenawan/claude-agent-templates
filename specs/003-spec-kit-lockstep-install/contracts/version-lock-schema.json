@@ -1,0 +1,193 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/dkoenawan/claude-agent-templates/schemas/version-lock.json",
+  "title": "Version Lock Schema",
+  "description": "Specification for .version-lock.json file that records installed component versions and installation history",
+  "type": "object",
+  "required": [
+    "version",
+    "installation_id",
+    "installed_at",
+    "components"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Version lock schema version (major.minor)",
+      "examples": ["1.0", "2.1"]
+    },
+    "installation_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique installation identifier (UUID v4)",
+      "examples": ["550e8400-e29b-41d4-a716-446655440000"]
+    },
+    "installed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of initial installation",
+      "examples": ["2025-10-22T12:00:00Z"]
+    },
+    "last_verified": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of last version verification",
+      "examples": ["2025-10-22T14:30:00Z"]
+    },
+    "components": {
+      "type": "object",
+      "required": [
+        "claude-agent-templates",
+        "spec-kit"
+      ],
+      "properties": {
+        "claude-agent-templates": {
+          "type": "object",
+          "required": [
+            "version",
+            "installed_from",
+            "install_path"
+          ],
+          "properties": {
+            "version": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+              "description": "Installed version (semantic versioning)",
+              "examples": ["1.0.0", "2.1.3"]
+            },
+            "installed_from": {
+              "type": "string",
+              "enum": ["git", "archive", "manual"],
+              "description": "Installation source type"
+            },
+            "commit": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{7,40}$",
+              "description": "Git commit hash (if installed from git)",
+              "examples": ["abc1234", "abc1234567890abcdef1234567890abcdef12345"]
+            },
+            "install_path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Absolute path to installation directory",
+              "examples": ["/home/user/.claude-agent-templates", "C:\\Users\\user\\.claude-agent-templates"]
+            }
+          },
+          "additionalProperties": false
+        },
+        "spec-kit": {
+          "type": "object",
+          "required": [
+            "version",
+            "installed_from",
+            "install_path"
+          ],
+          "properties": {
+            "version": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+              "description": "Installed spec-kit version",
+              "examples": ["0.0.72", "1.0.0"]
+            },
+            "installed_from": {
+              "type": "string",
+              "enum": ["vendored", "git", "npm"],
+              "description": "Spec-kit installation source"
+            },
+            "install_path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Absolute path to spec-kit directory",
+              "examples": ["/home/user/.claude-agent-templates/.specify"]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "history": {
+      "type": "array",
+      "description": "Chronological log of installation/upgrade operations",
+      "items": {
+        "type": "object",
+        "required": [
+          "timestamp",
+          "action",
+          "component"
+        ],
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the operation"
+          },
+          "action": {
+            "type": "string",
+            "enum": ["install", "upgrade", "verify", "rollback"],
+            "description": "Type of operation performed"
+          },
+          "component": {
+            "type": "string",
+            "enum": ["claude-agent-templates", "spec-kit", "all"],
+            "description": "Component(s) affected by the operation"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "description": "Version involved in the operation (for install/upgrade)"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["success", "failure", "partial"],
+            "description": "Operation outcome"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message if status is 'failure' or 'partial'"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "version": "1.0",
+      "installation_id": "550e8400-e29b-41d4-a716-446655440000",
+      "installed_at": "2025-10-22T12:00:00Z",
+      "last_verified": "2025-10-22T12:00:00Z",
+      "components": {
+        "claude-agent-templates": {
+          "version": "1.0.0",
+          "installed_from": "git",
+          "commit": "abc1234",
+          "install_path": "/home/user/.claude-agent-templates"
+        },
+        "spec-kit": {
+          "version": "0.0.72",
+          "installed_from": "vendored",
+          "install_path": "/home/user/.claude-agent-templates/.specify"
+        }
+      },
+      "history": [
+        {
+          "timestamp": "2025-10-22T12:00:00Z",
+          "action": "install",
+          "component": "all",
+          "version": "1.0.0",
+          "status": "success"
+        },
+        {
+          "timestamp": "2025-10-22T14:30:00Z",
+          "action": "verify",
+          "component": "spec-kit",
+          "version": "0.0.72",
+          "status": "success"
+        }
+      ]
+    }
+  ]
+}

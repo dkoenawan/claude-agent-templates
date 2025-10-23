@@ -1,0 +1,19 @@
+{
+  "version": "1.0",
+  "name": "spec-kit-agents",
+  "dependencies": {
+    "spec-kit": {
+      "version": "0.0.72",
+      "source": "vendored",
+      "install_path": ".specify",
+      "integrity": "sha256-0000000000000000000000000000000000000000000000000000000000000000",
+      "compatibility": {
+        "min_version": "0.0.70",
+        "max_version": "0.1.0",
+        "breaking_versions": []
+      }
+    }
+  },
+  "update_policy": "manual",
+  "last_updated": "2025-10-23"
+}

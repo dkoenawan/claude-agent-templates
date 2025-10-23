@@ -21,3 +21,23 @@ Thumbs.db
 *.tmp
 *.bak
 *.backup
+
+# Go
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.sum
+vendor/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log

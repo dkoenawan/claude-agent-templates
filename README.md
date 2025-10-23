@@ -27,11 +27,71 @@ Claude Agent Templates extends GitHub's Spec-Driven Development approach, creati
 
 ## Quick Start
 
-### 1. Clone this repository
+### Installation (Single Command!)
+
+**Option 1: One-Liner** (After first release is published)
 ```bash
+curl -fsSL https://raw.githubusercontent.com/dkoenawan/claude-agent-templates/main/scripts/install.sh | bash
+spec-kit-agents install
+```
+
+**Option 2: Build from Source** (Current)
+```bash
+# Clone and build
 git clone https://github.com/dkoenawan/claude-agent-templates.git
 cd claude-agent-templates
+go build -o bin/spec-kit-agents ./cmd/spec-kit-agents/
+
+# Install the CLI tool
+sudo cp bin/spec-kit-agents /usr/local/bin/
+# OR for user-only install:
+cp bin/spec-kit-agents ~/.local/bin/
+
+# Run single-command installation
+spec-kit-agents install
 ```
+
+**What happens during installation:**
+- ✅ **Auto-detects** installation mode (fresh, coexist with existing spec-kit, or global)
+- ✅ **Installs spec-kit** (pinned to v0.0.72) with version compatibility management
+- ✅ **Sets up agents** in `.claude/agents/` or `~/.claude/agents/`
+- ✅ **Configures slash commands** in `.claude/commands/` with `speckit.*` namespace
+- ✅ **Creates version lock** for tracking installations and upgrades
+- ✅ **Verifies integrity** to ensure everything works correctly
+
+### Verify Installation
+
+```bash
+# Check installation status and versions
+spec-kit-agents status
+
+# Verify version compatibility
+spec-kit-agents check
+
+# Show CLI version info
+spec-kit-agents version
+
+# Test with dry-run (see what would happen)
+spec-kit-agents install --dry-run
+```
+
+**Expected output from `spec-kit-agents status`:**
+```
+Installation Details:
+  Prefix: spec-kit-agents
+  Mode: standalone
+
+Installed Components:
+  claude-agent-templates: v1.0.0
+  spec-kit: v0.0.72
+
+Installation History:
+  [2025-10-23] Initial installation
+    - claude-agent-templates v1.0.0
+    - spec-kit v0.0.72
+```
+
+### Manual Installation (Legacy Method)
 
 #### Install Task (if not already installed)
 Task is a cross-platform task runner that provides unified automation. Install it from [taskfile.dev/installation](https://taskfile.dev/installation/) or use the included binary:
@@ -41,9 +101,7 @@ Task is a cross-platform task runner that provides unified automation. Install i
 # It will be used automatically if Task is not in your PATH
 ```
 
-### 2. Install agents globally
-
-#### Using Task (Recommended)
+#### Using Task
 ```bash
 # Install all agents using the unified Taskfile
 task install
@@ -67,6 +125,113 @@ mkdir -p ~/.claude/agents
 cp agents/core/*.md ~/.claude/agents/
 cp agents/python/*.md ~/.claude/agents/
 ```
+
+### How to Update
+
+Updates work at two levels - the CLI tool and your project installations:
+
+#### Update Project Installation (Agents + Spec-Kit)
+
+When new agent templates or spec-kit versions are released:
+
+```bash
+cd /path/to/your/project
+
+# Check for updates
+spec-kit-agents check
+
+# Update to latest (from version manifest)
+spec-kit-agents update
+
+# Or update to specific version
+spec-kit-agents update --version v1.2.0
+```
+
+**What happens:**
+1. ✅ Automatic backup created
+2. ✅ Version compatibility checked
+3. ✅ Files updated (agents + spec-kit)
+4. ✅ Installation history recorded
+5. ⚠️ Auto-rollback if anything fails
+
+**Result:** Your `spec-kit-agents/` directory updated with new versions.
+
+#### Update CLI Tool (spec-kit-agents binary)
+
+When new CLI features are released:
+
+```bash
+# Re-run one-liner (overwrites old binary)
+curl -fsSL https://raw.githubusercontent.com/dkoenawan/claude-agent-templates/main/scripts/install.sh | bash
+
+# Or rebuild from source
+git pull origin main
+go build -o bin/spec-kit-agents ./cmd/spec-kit-agents/
+sudo cp bin/spec-kit-agents /usr/local/bin/
+```
+
+**Note:** CLI updates don't affect existing project installations.
+
+#### Rollback After Update
+
+If update causes issues:
+
+```bash
+# Automatic rollback happens on failure
+# Manual rollback:
+spec-kit-agents rollback
+
+# Rollback to specific backup
+spec-kit-agents rollback --backup-id backup-20251023-143000
+
+# List available backups
+spec-kit-agents rollback --list
+```
+
+#### Check Status and History
+
+```bash
+# View current installation
+spec-kit-agents status
+
+# Detailed history
+spec-kit-agents status --detailed
+```
+
+**Example output:**
+```
+Installation Details:
+  Prefix: spec-kit-agents
+  Mode: standalone
+
+Installed Components:
+  claude-agent-templates: v1.0.0
+  spec-kit: v0.0.72
+
+Installation History:
+  [2025-10-23] Initial installation
+    - claude-agent-templates v1.0.0
+    - spec-kit v0.0.72
+```
+
+### Key Features of spec-kit Lockstep Installation
+
+**Version Compatibility Management**
+- Pinned spec-kit version (currently v0.0.72) prevents breaking changes
+- Compatibility range validation (min: v0.0.70, max: v0.1.0)
+- Breaking version detection
+- Automatic conflict resolution
+
+**Upgrade Safety**
+- Automatic backup before updates
+- Rollback on failure
+- Installation history tracking
+- Version lock with UUID tracking
+
+**Installation Modes**
+- **Fresh**: New installation in clean environment
+- **Upgrade**: Update existing installation
+- **Coexist**: Install alongside existing spec-kit (uses `spec-kit-agents/` prefix)
 
 ### 3. Use agents in Claude Code
 ```bash
