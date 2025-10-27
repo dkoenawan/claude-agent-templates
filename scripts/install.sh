@@ -129,29 +129,28 @@ main() {
         exit 1
     fi
 
-    # For now, use a hardcoded version since releases might not exist yet
-    # TODO: Fetch from GitHub API once releases are published
-    version="v1.0.0"
-    echo -e "${YELLOW}Note: Using default version $version (releases not yet published)${NC}"
-    echo -e "${YELLOW}For manual installation, build from source:${NC}"
-    echo "  git clone https://github.com/$REPO.git"
-    echo "  cd claude-agent-templates"
-    echo "  go build -o bin/$BINARY_NAME ./cmd/spec-kit-agents/"
-    echo "  cp bin/$BINARY_NAME $INSTALL_DIR/"
+    # Fetch latest release version from GitHub API
+    if command -v curl &> /dev/null; then
+        version=$(curl -fsSL "$GITHUB_API" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    elif command -v wget &> /dev/null; then
+        version=$(wget -qO- "$GITHUB_API" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    else
+        echo -e "${RED}Error: Neither curl nor wget is available${NC}"
+        exit 1
+    fi
+
+    if [ -z "$version" ]; then
+        echo -e "${RED}Error: Could not fetch latest release version${NC}"
+        echo "Please check your internet connection or install manually:"
+        echo "  https://github.com/$REPO/releases"
+        exit 1
+    fi
+
+    echo "Latest version: $version"
     echo ""
 
-    # For now, suggest manual installation
-    echo -e "${YELLOW}=========================================${NC}"
-    echo -e "${YELLOW}Automatic binary download not yet available${NC}"
-    echo -e "${YELLOW}=========================================${NC}"
-    echo ""
-    echo "Please install manually using the steps above, or wait for the first release."
-    echo ""
-    echo "After installation, run:"
-    echo "  spec-kit-agents install"
-    echo ""
-
-    exit 0
+    # Install the binary
+    install_binary "$platform" "$version"
 }
 
 main "$@"
