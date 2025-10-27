@@ -31,7 +31,6 @@ bin/
 *.dylib
 *.test
 *.out
-go.sum
 vendor/
 
 # Environment files
