@@ -24,10 +24,10 @@
 
 **Purpose**: Project initialization and basic structure for embedding support
 
-- [ ] T001 Review existing Go project structure and dependencies in go.mod
-- [ ] T002 [P] Add build scripts for embedding files in scripts/build-with-embed.sh
-- [ ] T003 [P] Create version injection script in scripts/inject-version.sh
-- [ ] T004 Update .gitignore to exclude temporary build artifacts
+- [X] T001 Review existing Go project structure and dependencies in go.mod
+- [X] T002 [P] Add build scripts for embedding files in scripts/build-with-embed.sh
+- [X] T003 [P] Create version injection script in scripts/inject-version.sh
+- [X] T004 Update .gitignore to exclude temporary build artifacts
 
 ---
 

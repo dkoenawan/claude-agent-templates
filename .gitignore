@@ -40,3 +40,13 @@ vendor/
 
 # Logs
 *.log
+
+# Build artifacts
+*.checksums.json
+.build/
+dist/
+coverage/
+
+# Test artifacts
+tests/fixtures/tmp/
+tests/integration/tmp/
