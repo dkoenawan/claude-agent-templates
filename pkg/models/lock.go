@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"time"
 
@@ -12,12 +13,18 @@ import (
 
 // VersionLock represents the installed component versions and history
 type VersionLock struct {
-	Version        string              `json:"version"`
-	InstallationID string              `json:"installation_id"`
-	InstalledAt    string              `json:"installed_at"`
-	LastVerified   string              `json:"last_verified,omitempty"`
-	Components     map[string]Component `json:"components"`
-	History        []HistoryEntry      `json:"history,omitempty"`
+	Version          string               `json:"version"`
+	InstallationID   string               `json:"installation_id"`
+	InstalledAt      string               `json:"installed_at"`
+	LastVerified     string               `json:"last_verified,omitempty"`
+	Components       map[string]Component `json:"components"`
+	History          []HistoryEntry       `json:"history,omitempty"`
+
+	// v2.0 fields for global installation support
+	InstallationType string         `json:"installation_type,omitempty"` // "global" or "repository-local"
+	InstallationPath string         `json:"installation_path,omitempty"` // Absolute path to installation root
+	SourceType       string         `json:"source_type,omitempty"`       // "embedded", "repository", or "downloaded"
+	Backups          []BackupMetadata `json:"backups,omitempty"`         // Backup history for rollback support
 }
 
 // Component represents an installed component
@@ -38,6 +45,15 @@ type HistoryEntry struct {
 	Error     string `json:"error,omitempty"`
 }
 
+// BackupMetadata represents a backup created before an update
+type BackupMetadata struct {
+	BackupID        string `json:"backup_id"`
+	CreatedAt       string `json:"created_at"`
+	PreviousVersion string `json:"previous_version"`
+	BackupPath      string `json:"backup_path"`
+	Reason          string `json:"reason"` // "pre-update", "manual", "scheduled"
+}
+
 // NewVersionLock creates a new version lock with a unique installation ID
 func NewVersionLock() *VersionLock {
 	now := time.Now().UTC().Format(time.RFC3339)
@@ -52,6 +68,7 @@ func NewVersionLock() *VersionLock {
 }
 
 // LoadVersionLock loads a version lock from a JSON file
+// Automatically migrates v1.0 locks to v2.0 schema
 func LoadVersionLock(path string) (*VersionLock, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -63,12 +80,46 @@ func LoadVersionLock(path string) (*VersionLock, error) {
 		return nil, fmt.Errorf("failed to parse version lock JSON: %w", err)
 	}
 
+	// Migrate v1.0 to v2.0 if needed
+	if lock.Version == "1.0" {
+		migrateV1ToV2(&lock, path)
+	}
+
 	// Validate lock
 	if err := lock.Validate(); err != nil {
 		return nil, fmt.Errorf("version lock validation failed: %w", err)
 	}
 
 	return &lock, nil
+}
+
+// migrateV1ToV2 migrates a v1.0 version lock to v2.0 schema
+func migrateV1ToV2(lock *VersionLock, lockPath string) {
+	// Set v2.0 version
+	lock.Version = "2.0"
+
+	// Set default values for new v2.0 fields
+	if lock.InstallationType == "" {
+		lock.InstallationType = "repository-local" // v1.0 was repository-local only
+	}
+
+	if lock.SourceType == "" {
+		lock.SourceType = "repository" // v1.0 was repository-based
+	}
+
+	if lock.InstallationPath == "" {
+		// Try to infer from lock path
+		if lockPath != "" {
+			lock.InstallationPath = filepath.Dir(lockPath)
+		}
+	}
+
+	if lock.Backups == nil {
+		lock.Backups = []BackupMetadata{}
+	}
+
+	// Add migration history entry
+	lock.AddHistoryEntry("upgrade", "all", "2.0", "success", nil)
 }
 
 // Save saves the version lock to a JSON file

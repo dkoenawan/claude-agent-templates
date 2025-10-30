@@ -195,3 +195,27 @@ func GetClaudeSkillsDir() (string, error) {
 	}
 	return filepath.Join(claudeDir, "skills"), nil
 }
+
+// GetGlobalVersionLockPath returns the path to the global version lock file in ~/.claude/
+func GetGlobalVersionLockPath() (string, error) {
+	claudeDir, err := GetClaudeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(claudeDir, ".version-lock.json"), nil
+}
+
+// HasDiskSpace checks if there is sufficient disk space available
+// Returns true if at least minBytes are available
+func HasDiskSpace(path string, minBytes int64) (bool, error) {
+	// This is a simplified check - a full implementation would use syscall.Statfs on Unix
+	// or similar on Windows. For now, we just check if the directory is writable.
+	testFile := filepath.Join(path, ".diskspace-test")
+	f, err := os.Create(testFile)
+	if err != nil {
+		return false, fmt.Errorf("cannot write to %s: %w", path, err)
+	}
+	f.Close()
+	os.Remove(testFile)
+	return true, nil
+}

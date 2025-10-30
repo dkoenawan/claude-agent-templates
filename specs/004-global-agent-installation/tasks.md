@@ -37,22 +37,22 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 Create internal/embed/ package structure with embed.go
-- [ ] T006 [P] Implement Go embed directives for agents/, .specify/ in internal/embed/embed.go
-- [ ] T007 [P] Implement EmbeddedFiles interface: GetAgents() in internal/embed/embed.go
-- [ ] T008 [P] Implement EmbeddedFiles interface: GetSpecify() in internal/embed/embed.go
-- [ ] T009 [P] Implement EmbeddedFiles interface: GetCommands() in internal/embed/embed.go
-- [ ] T010 Implement GetVersion() and GetBuildTime() with build-time injection in internal/embed/embed.go
-- [ ] T011 Create checksum generation pre-build script in scripts/generate-checksums.sh
-- [ ] T012 Implement GetChecksum() and ListFiles() methods in internal/embed/embed.go
-- [ ] T013 Create SourceFileProvider interface abstraction in internal/install/provider.go
-- [ ] T014 Implement EmbeddedSourceProvider implementing SourceFileProvider in internal/embed/provider.go
-- [ ] T015 Implement RepositorySourceProvider implementing SourceFileProvider in internal/install/repository_provider.go
-- [ ] T016 Extend VersionLock model with new fields (installationType, installationPath, sourceType, backups) in pkg/models/lock.go
-- [ ] T017 Implement version lock schema migration from v1.0 to v2.0 in pkg/models/lock.go
-- [ ] T018 Create GlobalInstallation entity and methods in internal/install/global.go
-- [ ] T019 [P] Create DownloadPackage entity in pkg/models/download.go
-- [ ] T020 [P] Update cross-platform path handling for ~/.claude/ in internal/config/paths.go
+- [X] T005 Create internal/embed/ package structure with embed.go
+- [X] T006 [P] Implement Go embed directives for agents/, .specify/ in internal/embed/embed.go
+- [X] T007 [P] Implement EmbeddedFiles interface: GetAgents() in internal/embed/embed.go
+- [X] T008 [P] Implement EmbeddedFiles interface: GetSpecify() in internal/embed/embed.go
+- [X] T009 [P] Implement EmbeddedFiles interface: GetCommands() in internal/embed/embed.go
+- [X] T010 Implement GetVersion() and GetBuildTime() with build-time injection in internal/embed/embed.go
+- [X] T011 Create checksum generation pre-build script in scripts/generate-checksums.sh
+- [X] T012 Implement GetChecksum() and ListFiles() methods in internal/embed/embed.go
+- [X] T013 Create SourceFileProvider interface abstraction in internal/install/provider.go
+- [X] T014 Implement EmbeddedSourceProvider implementing SourceFileProvider in internal/embed/provider.go
+- [X] T015 Implement RepositorySourceProvider implementing SourceFileProvider in internal/install/repository_provider.go
+- [X] T016 Extend VersionLock model with new fields (installationType, installationPath, sourceType, backups) in pkg/models/lock.go
+- [X] T017 Implement version lock schema migration from v1.0 to v2.0 in pkg/models/lock.go
+- [X] T018 Create GlobalInstallation entity and methods in internal/install/global.go
+- [X] T019 [P] Create DownloadPackage entity in pkg/models/download.go
+- [X] T020 [P] Update cross-platform path handling for ~/.claude/ in internal/config/paths.go
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
