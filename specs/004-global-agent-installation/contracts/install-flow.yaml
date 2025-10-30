@@ -1,0 +1,505 @@
+# Installation Flow Contract
+# Defines the end-to-end installation workflow for global and repository-local modes
+
+version: "1.0"
+description: |
+  Specifies the complete installation workflow including source selection,
+  validation, file copying, version tracking, and rollback procedures.
+
+workflows:
+  - name: GlobalInstallation
+    description: Fresh global installation using embedded or downloaded files
+    trigger: "User runs: spec-kit-agents install --global"
+    preconditions:
+      - Binary contains embedded files (via go:embed)
+      - ~/.claude/ directory is writable (or can be created)
+      - At least 100MB free disk space
+    steps:
+      - step: 1
+        name: Source Selection
+        action: Determine source of files
+        logic: |
+          if repository_source_files_exist():
+              use repository files (.specify/, agents/)
+          else:
+              use embedded files from binary
+        outputs:
+          - sourceProvider: SourceFileProvider instance
+          - sourceType: "repository" | "embedded"
+
+      - step: 2
+        name: Pre-Installation Validation
+        action: Validate installation prerequisites
+        checks:
+          - ~/.claude/ writable or creatable
+          - Sufficient disk space (>100MB)
+          - No conflicting global installation (unless --force)
+          - Source files complete and valid
+        outputs:
+          - validationResult: ValidationResult
+        error_handling: |
+          On failure: return detailed error message, exit with code 1
+
+      - step: 3
+        name: Create Directories
+        action: Set up ~/.claude/ structure
+        creates:
+          - ~/.claude/
+          - ~/.claude/agents/
+          - ~/.claude/commands/
+          - ~/.claude/skills/
+        permissions: 0755 (rwxr-xr-x)
+
+      - step: 4
+        name: Copy Agent Files
+        action: Copy agents with cat- prefix
+        logic: |
+          for agent_file in sourceProvider.GetAgentFiles():
+              basename = path.basename(agent_file)
+              target = ~/.claude/agents/cat-{basename}
+              copy(agent_file, target)
+        outputs:
+          - agentsCopied: int (count of agent files)
+
+      - step: 5
+        name: Copy Command Files
+        action: Copy slash commands with speckit. prefix
+        logic: |
+          for command_file in sourceProvider.GetCommandFiles():
+              basename = path.basename(command_file)
+              # Already has .md extension
+              target = ~/.claude/commands/speckit.{basename}
+              copy(command_file, target)
+        outputs:
+          - commandsCopied: int (count of command files)
+
+      - step: 6
+        name: Create Version Lock
+        action: Record installation metadata
+        creates:
+          - ~/.claude/.version-lock.json
+        content: |
+          {
+            "installationID": "{generated-uuid}",
+            "installedAt": "{iso8601-timestamp}",
+            "lastVerified": "{iso8601-timestamp}",
+            "installationType": "global",
+            "installationPath": "{absolute-path-to-home}/.claude",
+            "sourceType": "{repository|embedded}",
+            "components": [
+              {"name": "spec-kit-agents", "version": "{version}", "installedAt": "{timestamp}"},
+              {"name": "spec-kit", "version": "{version}", "installedAt": "{timestamp}"}
+            ],
+            "backups": [],
+            "history": [
+              {"timestamp": "{timestamp}", "action": "install", "version": "{version}", "success": true}
+            ]
+          }
+
+      - step: 7
+        name: Post-Installation Verification
+        action: Verify installation succeeded
+        checks:
+          - At least one agent file exists in ~/.claude/agents/
+          - At least one command file exists in ~/.claude/commands/
+          - Version lock is valid JSON
+          - Version lock contains required fields
+        error_handling: |
+          On failure: rollback (delete created files), return error
+
+      - step: 8
+        name: Report Success
+        action: Display installation summary to user
+        outputs:
+          - Installation location: ~/.claude/
+          - Agents installed: {count}
+          - Commands installed: {count}
+          - Version: {version}
+
+    postconditions:
+      - Version lock exists at ~/.claude/.version-lock.json
+      - Agents accessible from any repository
+      - Commands invokable via /speckit.* in Claude Code
+
+    success_criteria:
+      - Installation completes in < 2 minutes (spec SC-001)
+      - Binary size < 20MB (spec SC-003)
+      - All agent files copied successfully
+      - Version lock valid and complete
+
+  - name: UpdateExistingInstallation
+    description: Update global installation to newer version
+    trigger: "User runs: spec-kit-agents update"
+    preconditions:
+      - Global installation exists (version lock found)
+      - Internet connectivity available (or offline package provided)
+      - Newer version available
+    steps:
+      - step: 1
+        name: Load Current Installation
+        action: Read existing version lock
+        outputs:
+          - currentVersion: string
+          - installationPath: string
+          - installationType: string
+
+      - step: 2
+        name: Check for Updates
+        action: Query GitHub API or manifest for latest version
+        logic: |
+          latest = github.GetLatestRelease("dkoenawan/claude-agent-templates")
+          if semver.Compare(latest, currentVersion) <= 0:
+              return "Already up to date"
+        outputs:
+          - latestVersion: string
+          - downloadURL: string
+
+      - step: 3
+        name: Download Update Package
+        action: Download and validate archive
+        logic: |
+          pkg = downloader.DownloadRelease(latestVersion)
+          validated = downloader.ValidateChecksum(pkg.LocalPath, pkg.Checksum)
+          if !validated:
+              return ErrChecksumMismatch
+        outputs:
+          - downloadPackage: *DownloadPackage
+
+      - step: 4
+        name: Create Backup
+        action: Backup current installation
+        logic: |
+          backupID = generate_uuid()
+          backupPath = {installationPath}/.backups/backup-{backupID}
+          copy_directory(~/.claude/agents, backupPath/agents)
+          copy_directory(~/.claude/commands, backupPath/commands)
+          update_version_lock_backups(backupID, currentVersion, backupPath)
+        outputs:
+          - backupID: string
+          - backupPath: string
+
+      - step: 5
+        name: Extract Update
+        action: Extract downloaded archive
+        logic: |
+          extractor.ExtractArchive(pkg.LocalPath, tempDir, pkg.ArchiveFormat)
+        outputs:
+          - extractedPath: string
+
+      - step: 6
+        name: Install Updated Files
+        action: Copy new files over existing installation
+        logic: |
+          # Same as GlobalInstallation steps 4-5
+          # Overwrites existing agents and commands
+        outputs:
+          - agentsUpdated: int
+          - commandsUpdated: int
+
+      - step: 7
+        name: Update Version Lock
+        action: Record update in version lock
+        updates:
+          - components[].version to new version
+          - components[].installedAt to current timestamp
+          - history[] add new entry
+        error_handling: |
+          On failure: restore from backup (step 8), return error
+
+      - step: 8
+        name: Verify Update
+        action: Confirm new version installed correctly
+        checks:
+          - Version lock shows new version
+          - Agent files present and valid
+          - Command files present and valid
+        error_handling: |
+          On failure: automatic rollback to backup
+
+      - step: 9
+        name: Cleanup Old Backups
+        action: Keep only last 3 backups
+        logic: |
+          backups = list_backups()
+          if len(backups) > 3:
+              for backup in backups[3:]:
+                  delete_directory(backup.path)
+                  remove_from_version_lock(backup.id)
+
+      - step: 10
+        name: Report Success
+        action: Display update summary
+        outputs:
+          - Previous version: {old}
+          - New version: {new}
+          - Files updated: {count}
+          - Backup created: {backupPath}
+
+    rollback_procedure:
+      - name: Automatic Rollback on Failure
+        trigger: Update fails at any step after backup creation
+        steps:
+          - Restore agents from backup: copy(backupPath/agents, ~/.claude/agents)
+          - Restore commands from backup: copy(backupPath/commands, ~/.claude/commands)
+          - Restore version lock or revert to previous state
+          - Log rollback action in version lock history
+          - Return error to user with rollback confirmation
+
+    success_criteria:
+      - Update completes in < 5 minutes (typical network)
+      - 99% success rate with automatic rollback (spec SC-005)
+      - No data loss (backup created before changes)
+      - User can verify status shows new version
+
+  - name: RepositoryLocalWithFallback
+    description: Install in repository context with embedded fallback
+    trigger: "User runs: spec-kit-agents install (in repository directory)"
+    preconditions:
+      - Current directory is within a git repository (has .git/)
+      - Binary contains embedded files as fallback
+    steps:
+      - step: 1
+        name: Detect Repository Root
+        action: Find .git/ directory in parent hierarchy
+        outputs:
+          - repositoryRoot: string (absolute path)
+
+      - step: 2
+        name: Source Selection with Fallback
+        action: Try repository first, fallback to embedded
+        logic: |
+          if exists(repositoryRoot/.specify) && exists(repositoryRoot/agents):
+              sourceProvider = RepositorySource(repositoryRoot)
+              sourceType = "repository"
+          else:
+              log.Info("Repository source files not found, using embedded files")
+              sourceProvider = EmbeddedSource()
+              sourceType = "embedded"
+        outputs:
+          - sourceProvider: SourceFileProvider
+          - sourceType: string
+
+      - step: 3
+        name: Determine Installation Prefix
+        action: Choose prefix based on existing .specify/
+        logic: |
+          if exists(repositoryRoot/.specify):
+              # Coexist mode - existing spec-kit installation
+              prefix = "spec-kit-agents"
+          else:
+              # Standalone mode
+              prefix = "."
+        outputs:
+          - prefix: string
+
+      - step: 4
+        name: Repository-Local Installation
+        action: Install to repository (if needed)
+        logic: |
+          if sourceType == "repository":
+              # Files already in repo, just validate
+              validate_source_files()
+          else:
+              # Copy embedded files to repo
+              copy(sourceProvider.GetSpecify(), {prefix}/.specify)
+        outputs:
+          - localInstallComplete: bool
+
+      - step: 5
+        name: Global Claude Integration
+        action: Install to ~/.claude/ for Claude Code access
+        logic: |
+          # Same as GlobalInstallation steps 3-5
+          # Agents and commands always go to ~/.claude/
+        outputs:
+          - agentsCopied: int
+          - commandsCopied: int
+
+      - step: 6
+        name: Create Repository Version Lock
+        action: Track repository-local installation
+        creates:
+          - {prefix}/.version-lock.json
+        content: |
+          {
+            "installationID": "{uuid}",
+            "installedAt": "{timestamp}",
+            "installationType": "repository-local",
+            "installationPath": "{repositoryRoot}/{prefix}",
+            "sourceType": "{repository|embedded}",
+            "components": [...],
+            "history": [...]
+          }
+
+      - step: 7
+        name: Report Success
+        action: Display installation summary
+        outputs:
+          - Installation type: repository-local
+          - Repository: {repositoryRoot}
+          - Prefix: {prefix}
+          - Agents available globally via ~/.claude/
+
+    postconditions:
+      - Version lock exists in repository
+      - Agents accessible from this repository
+      - Agents also accessible from other repositories via global installation
+
+    precedence_rule: |
+      Repository-local agents take precedence over global agents when
+      in this repository. Claude Code checks .claude/ in current directory
+      before ~/.claude/.
+
+state_machine:
+  - name: InstallationState
+    description: State tracking during installation process
+    states:
+      - name: Initializing
+        description: Setup and validation phase
+        transitions:
+          - to: SourceSelected
+            condition: Source provider created successfully
+          - to: Failed
+            condition: Source selection fails
+
+      - name: SourceSelected
+        description: Source files identified and validated
+        transitions:
+          - to: Installing
+            condition: Validation passes
+          - to: Failed
+            condition: Validation fails
+
+      - name: Installing
+        description: Copying files and creating directories
+        transitions:
+          - to: Verifying
+            condition: All files copied successfully
+          - to: RollingBack
+            condition: Copy operation fails
+
+      - name: Verifying
+        description: Post-installation checks
+        transitions:
+          - to: Complete
+            condition: All checks pass
+          - to: RollingBack
+            condition: Verification fails
+
+      - name: Complete
+        description: Installation successful
+        terminal: true
+
+      - name: RollingBack
+        description: Restoring previous state after failure
+        transitions:
+          - to: Failed
+            condition: Rollback complete
+
+      - name: Failed
+        description: Installation failed (with or without rollback)
+        terminal: true
+
+error_codes:
+  - code: ERR_SOURCE_NOT_FOUND
+    message: "No source files available (repository missing and embed failed)"
+    resolution: "Ensure binary has embedded files or run from repository root"
+
+  - code: ERR_INSUFFICIENT_DISK_SPACE
+    message: "Insufficient disk space: need 100MB, have {available}MB"
+    resolution: "Free up disk space and try again"
+
+  - code: ERR_PERMISSION_DENIED
+    message: "Cannot write to {path}: permission denied"
+    resolution: "Check permissions or run with appropriate privileges"
+
+  - code: ERR_CHECKSUM_MISMATCH
+    message: "Downloaded file checksum mismatch"
+    resolution: "Download may be corrupted, will retry automatically"
+
+  - code: ERR_VERIFICATION_FAILED
+    message: "Post-installation verification failed: {details}"
+    resolution: "Installation rolled back, check logs for details"
+
+  - code: ERR_ROLLBACK_FAILED
+    message: "Rollback failed: {details}"
+    resolution: "Manual cleanup may be required at {path}"
+
+performance_targets:
+  - metric: GlobalInstallation total time
+    target: "< 2 minutes"
+    typical: "< 30 seconds"
+    spec_reference: SC-001
+
+  - metric: Update total time
+    target: "< 5 minutes including download"
+    typical: "< 2 minutes on typical connection"
+    spec_reference: "Based on SC-001"
+
+  - metric: File copy speed
+    target: "> 10MB/s"
+    typical: "Limited by disk I/O, ~50MB/s SSD"
+
+  - metric: Verification time
+    target: "< 1 second"
+    typical: "< 500ms for 60 files"
+
+testing_scenarios:
+  - scenario: Fresh global install on clean system
+    setup: Clean VM or container, no ~/.claude/
+    expected: Installation succeeds using embedded files
+
+  - scenario: Global install with repository source
+    setup: Run from repository root with .specify/ present
+    expected: Installation uses repository files, notes source in version lock
+
+  - scenario: Update with backup and rollback
+    setup: Existing global installation
+    simulate_failure: Corrupt file during copy
+    expected: Automatic rollback, previous version restored
+
+  - scenario: Repository-local in existing spec-kit repo
+    setup: Repository already has .specify/ from spec-kit
+    expected: Coexist mode, prefix=spec-kit-agents, no conflicts
+
+  - scenario: Offline installation
+    setup: No network connectivity
+    expected: Uses embedded files, completes successfully
+
+  - scenario: Concurrent installations
+    setup: Two processes try to install simultaneously
+    expected: Lock prevents conflicts, second waits or fails gracefully
+
+logging:
+  - level: INFO
+    events:
+      - Installation started
+      - Source selected (type)
+      - Files copied (count)
+      - Version lock created
+      - Installation complete
+
+  - level: DEBUG
+    events:
+      - Each file copied
+      - Checksum validations
+      - Directory creations
+      - State transitions
+
+  - level: WARN
+    events:
+      - Fallback to embedded files
+      - Old backups deleted
+      - Permissions adjusted
+
+  - level: ERROR
+    events:
+      - Validation failures
+      - Copy errors
+      - Verification failures
+      - Rollback triggers
+
+  - level: FATAL
+    events:
+      - Rollback failures
+      - Unrecoverable errors

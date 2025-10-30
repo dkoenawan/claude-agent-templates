@@ -1,0 +1,235 @@
+# Embed API Contract
+# Defines the interface for accessing embedded source files within the Go binary
+
+version: "1.0"
+package: internal/embed
+description: |
+  Provides access to agent definitions, templates, and spec-kit files embedded
+  in the binary at build time using Go's embed package. Enables installation
+  without requiring repository source files.
+
+interfaces:
+  - name: EmbeddedFiles
+    description: Main interface for accessing all embedded content
+    methods:
+      - name: GetAgents
+        description: Returns filesystem containing agent definitions
+        inputs: []
+        outputs:
+          - name: fs
+            type: fs.FS
+            description: Virtual filesystem rooted at agents/
+          - name: error
+            type: error
+            description: Error if agents directory not found in embedded files
+        behavior: |
+          Returns a sub-filesystem rooted at the agents/ directory containing
+          all agent markdown files organized by domain (core/, python/, dotnet/, etc.)
+        errors:
+          - code: ErrAgentsNotFound
+            condition: Agents directory missing from embedded files
+            message: "embedded agents directory not found"
+
+      - name: GetSpecify
+        description: Returns filesystem containing spec-kit files
+        inputs: []
+        outputs:
+          - name: fs
+            type: fs.FS
+            description: Virtual filesystem rooted at .specify/
+          - name: error
+            type: error
+            description: Error if .specify directory not found
+        behavior: |
+          Returns a sub-filesystem rooted at .specify/ directory containing
+          templates, scripts, and memory files.
+        errors:
+          - code: ErrSpecifyNotFound
+            condition: .specify directory missing from embedded files
+            message: "embedded .specify directory not found"
+
+      - name: GetCommands
+        description: Returns filesystem containing slash command files
+        inputs: []
+        outputs:
+          - name: fs
+            type: fs.FS
+            description: Virtual filesystem containing command markdown files
+          - name: error
+            type: error
+            description: Error if commands not found
+        behavior: |
+          Returns filesystem containing slash command files from .specify/templates/commands/
+        errors:
+          - code: ErrCommandsNotFound
+            condition: Commands directory missing
+            message: "embedded commands directory not found"
+
+      - name: GetVersion
+        description: Returns version of embedded files
+        inputs: []
+        outputs:
+          - name: version
+            type: string
+            description: Semantic version string (e.g., "v2.1.0")
+        behavior: |
+          Returns the version string injected at build time via -ldflags.
+          Never returns error - defaults to "unknown" if not set.
+
+      - name: GetBuildTime
+        description: Returns build timestamp
+        inputs: []
+        outputs:
+          - name: buildTime
+            type: time.Time
+            description: UTC timestamp when binary was built
+        behavior: |
+          Returns timestamp injected at build time. Defaults to zero time if not set.
+
+      - name: GetChecksum
+        description: Returns SHA256 checksum for a specific file
+        inputs:
+          - name: path
+            type: string
+            description: Relative path to file (e.g., "agents/core/requirements-analyst.md")
+        outputs:
+          - name: checksum
+            type: string
+            description: SHA256 hash as hex string (64 characters)
+          - name: error
+            type: error
+            description: Error if file not found or checksum not available
+        behavior: |
+          Returns precomputed checksum for the specified file. Checksums are
+          generated at build time and embedded in the binary.
+        errors:
+          - code: ErrFileNotFound
+            condition: Specified path doesn't exist in embedded files
+            message: "file not found in embedded files: {path}"
+          - code: ErrChecksumUnavailable
+            condition: Checksum not computed for this file
+            message: "checksum not available for: {path}"
+
+      - name: ListFiles
+        description: Returns list of all embedded file paths
+        inputs:
+          - name: prefix
+            type: string
+            description: Optional prefix filter (e.g., "agents/" for only agent files)
+        outputs:
+          - name: paths
+            type: "[]string"
+            description: List of relative file paths matching prefix
+          - name: error
+            type: error
+            description: Error if listing fails
+        behavior: |
+          Walks the embedded filesystem and returns all file paths.
+          If prefix is provided, only returns paths starting with that prefix.
+        errors:
+          - code: ErrListFailed
+            condition: Filesystem walk encounters error
+            message: "failed to list embedded files: {error}"
+
+data_structures:
+  - name: EmbeddedMetadata
+    description: Metadata about embedded files
+    fields:
+      - name: Version
+        type: string
+        description: Version of embedded content (semver)
+        required: true
+      - name: BuildTime
+        type: time.Time
+        description: When binary was built
+        required: true
+      - name: FileCount
+        type: int
+        description: Total number of embedded files
+        required: true
+      - name: TotalSize
+        type: int64
+        description: Total uncompressed size in bytes
+        required: true
+      - name: Checksums
+        type: "map[string]string"
+        description: File path to SHA256 checksum mapping
+        required: true
+
+  - name: FileInfo
+    description: Information about an embedded file
+    fields:
+      - name: Path
+        type: string
+        description: Relative path from embed root
+        required: true
+      - name: Size
+        type: int64
+        description: File size in bytes
+        required: true
+      - name: Checksum
+        type: string
+        description: SHA256 hash (hex string)
+        required: true
+      - name: ModTime
+        type: time.Time
+        description: Last modification time (from source repo)
+        required: false
+
+implementation_notes:
+  - Use go:embed directive to embed directories at build time
+  - Embed pattern: "//go:embed agents .specify"
+  - Store as embed.FS for efficient read-only access
+  - Checksums computed during build via pre-build script
+  - Version and build time injected via -ldflags at build time
+  - All paths must use forward slashes (even on Windows)
+  - Files are read-only (modifications not supported)
+
+usage_examples:
+  - name: Get agents for installation
+    code: |
+      agentsFS, err := embedded.GetAgents()
+      if err != nil {
+          return fmt.Errorf("failed to get embedded agents: %w", err)
+      }
+
+      // Copy to installation directory
+      err = fs.WalkDir(agentsFS, ".", func(path string, d fs.DirEntry, err error) error {
+          if err != nil {
+              return err
+          }
+          if !d.IsDir() {
+              data, _ := fs.ReadFile(agentsFS, path)
+              // Write to ~/.claude/agents/cat-{path}
+          }
+          return nil
+      })
+
+  - name: Verify embedded file integrity
+    code: |
+      expectedChecksum, err := embedded.GetChecksum("agents/core/requirements-analyst.md")
+      if err != nil {
+          return err
+      }
+
+      data, _ := fs.ReadFile(agentsFS, "core/requirements-analyst.md")
+      actualChecksum := fmt.Sprintf("%x", sha256.Sum256(data))
+
+      if actualChecksum != expectedChecksum {
+          return fmt.Errorf("checksum mismatch for embedded file")
+      }
+
+testing:
+  - Unit tests verify all embedded directories exist
+  - Test that GetVersion returns build-injected version
+  - Test checksum validation for sample files
+  - Test file listing with various prefixes
+  - Integration test installs from embedded files
+  - Test behavior when embed directive is commented out (build failure expected)
+
+performance:
+  - Embedded files accessed via memory-mapped I/O (fast)
+  - No filesystem I/O required (files in binary)
+  - Checksums precomputed (no runtime hashing)
+  - File listing cached (computed once)
+  - Expected overhead: ~1-2ms for typical operations

@@ -1,0 +1,331 @@
+# Download API Contract
+# Defines the interface for downloading and validating update packages from GitHub Releases
+
+version: "1.0"
+package: internal/download
+description: |
+  Handles downloading update packages from GitHub Releases, validating checksums,
+  and extracting archives. Supports both direct URLs and GitHub API fallback.
+
+interfaces:
+  - name: Downloader
+    description: Main interface for downloading update packages
+    methods:
+      - name: DownloadRelease
+        description: Downloads a specific release version
+        inputs:
+          - name: version
+            type: string
+            description: Version to download (e.g., "v2.1.0")
+          - name: options
+            type: DownloadOptions
+            description: Download configuration options
+        outputs:
+          - name: package
+            type: "*DownloadPackage"
+            description: Downloaded and verified package
+          - name: error
+            type: error
+            description: Error if download or validation fails
+        behavior: |
+          1. Determines archive format based on platform (tar.gz or zip)
+          2. Constructs download URL from version and manifest
+          3. Downloads archive to temporary directory
+          4. Downloads checksum file
+          5. Validates checksum matches downloaded file
+          6. Returns DownloadPackage with extracted content
+        errors:
+          - code: ErrVersionNotFound
+            condition: Release version doesn't exist on GitHub
+            message: "release {version} not found"
+          - code: ErrDownloadFailed
+            condition: HTTP request fails or times out
+            message: "failed to download {url}: {error}"
+          - code: ErrChecksumMismatch
+            condition: Downloaded file checksum doesn't match expected
+            message: "checksum mismatch: expected {expected}, got {actual}"
+          - code: ErrInvalidArchive
+            condition: Archive is corrupted or invalid format
+            message: "invalid archive format: {error}"
+
+      - name: GetLatestVersion
+        description: Queries GitHub API for latest release
+        inputs:
+          - name: repository
+            type: string
+            description: GitHub repository (owner/repo format)
+        outputs:
+          - name: version
+            type: string
+            description: Latest version tag (e.g., "v2.1.0")
+          - name: releaseURL
+            type: string
+            description: URL to release page
+          - name: error
+            type: error
+            description: Error if API request fails
+        behavior: |
+          Queries GitHub API /repos/{owner}/{repo}/releases/latest endpoint.
+          Extracts version tag from response. No authentication required.
+        errors:
+          - code: ErrAPIRequestFailed
+            condition: GitHub API returns error or times out
+            message: "GitHub API request failed: {error}"
+          - code: ErrNoReleases
+            condition: Repository has no releases
+            message: "no releases found for {repository}"
+
+      - name: ValidateChecksum
+        description: Validates file checksum matches expected value
+        inputs:
+          - name: filePath
+            type: string
+            description: Path to file to validate
+          - name: expectedChecksum
+            type: string
+            description: Expected SHA256 checksum (hex string)
+        outputs:
+          - name: valid
+            type: bool
+            description: True if checksum matches
+          - name: error
+            type: error
+            description: Error if validation fails
+        behavior: |
+          Computes SHA256 hash of file and compares to expected value.
+          Case-insensitive comparison. Returns error if file unreadable.
+        errors:
+          - code: ErrFileNotFound
+            condition: File doesn't exist
+            message: "file not found: {path}"
+          - code: ErrReadFailed
+            condition: File exists but can't be read
+            message: "failed to read file: {error}"
+
+      - name: ExtractArchive
+        description: Extracts tar.gz or zip archive
+        inputs:
+          - name: archivePath
+            type: string
+            description: Path to archive file
+          - name: targetDir
+            type: string
+            description: Directory to extract files to
+          - name: format
+            type: ArchiveFormat
+            description: Archive format (TarGz or Zip)
+        outputs:
+          - name: fileCount
+            type: int
+            description: Number of files extracted
+          - name: error
+            type: error
+            description: Error if extraction fails
+        behavior: |
+          Extracts all files from archive to target directory while preserving
+          directory structure. Creates target directory if needed.
+        errors:
+          - code: ErrInvalidFormat
+            condition: Archive format doesn't match specified format
+            message: "invalid archive format"
+          - code: ErrExtractionFailed
+            condition: Failed to extract one or more files
+            message: "extraction failed: {error}"
+          - code: ErrTargetNotWritable
+            condition: Target directory not writable
+            message: "target directory not writable: {path}"
+
+  - name: ProgressReporter
+    description: Callback interface for reporting download progress
+    methods:
+      - name: OnProgress
+        description: Called periodically during download
+        inputs:
+          - name: bytesDownloaded
+            type: int64
+            description: Bytes downloaded so far
+          - name: totalBytes
+            type: int64
+            description: Total file size (-1 if unknown)
+          - name: percentComplete
+            type: float64
+            description: Percentage complete (0-100)
+        outputs: []
+        behavior: |
+          Called every ~100KB downloaded. Implementations should not block.
+
+data_structures:
+  - name: DownloadOptions
+    description: Configuration for download operation
+    fields:
+      - name: TempDir
+        type: string
+        description: Directory for temporary files (defaults to os.TempDir)
+        required: false
+      - name: Timeout
+        type: time.Duration
+        description: HTTP timeout per request (default 30s)
+        required: false
+      - name: MaxRetries
+        type: int
+        description: Maximum retry attempts (default 3)
+        required: false
+      - name: ProgressCallback
+        type: ProgressReporter
+        description: Optional progress reporting callback
+        required: false
+      - name: BaseURL
+        type: string
+        description: Override GitHub base URL (for testing)
+        required: false
+
+  - name: DownloadPackage
+    description: Downloaded and validated update package
+    fields:
+      - name: Version
+        type: string
+        description: Version string (e.g., "v2.1.0")
+        required: true
+      - name: DownloadURL
+        type: string
+        description: URL package was downloaded from
+        required: true
+      - name: LocalPath
+        type: string
+        description: Path to downloaded archive
+        required: true
+      - name: ExtractedPath
+        type: string
+        description: Path to extracted files
+        required: true
+      - name: ArchiveFormat
+        type: ArchiveFormat
+        description: Format of archive (TarGz or Zip)
+        required: true
+      - name: Checksum
+        type: string
+        description: Verified SHA256 checksum
+        required: true
+      - name: Size
+        type: int64
+        description: File size in bytes
+        required: true
+      - name: DownloadedAt
+        type: time.Time
+        description: Timestamp when download completed
+        required: true
+      - name: FileCount
+        type: int
+        description: Number of files in extracted archive
+        required: true
+
+  - name: ArchiveFormat
+    description: Supported archive formats
+    values:
+      - TarGz
+      - Zip
+
+constants:
+  - name: DefaultTimeout
+    value: 30 * time.Second
+    description: Default HTTP timeout
+
+  - name: DefaultMaxRetries
+    value: 3
+    description: Default number of retry attempts
+
+  - name: GitHubBaseURL
+    value: "https://github.com"
+    description: GitHub base URL for release downloads
+
+  - name: GitHubAPIBase
+    value: "https://api.github.com"
+    description: GitHub API base URL
+
+  - name: ProgressUpdateInterval
+    value: 102400
+    description: Bytes between progress updates (100KB)
+
+implementation_notes:
+  - Use exponential backoff for retries (1s, 2s, 4s)
+  - Support HTTP_PROXY and HTTPS_PROXY environment variables
+  - Validate SSL certificates (do not disable verification)
+  - Clean up temporary files even on error
+  - Download to temp file first, then atomic rename
+  - Use io.TeeReader for progress reporting during download
+  - Respect Content-Length header for progress percentage
+  - Handle redirects automatically (up to 10 redirects)
+
+url_construction:
+  - Direct URL pattern: "{GitHubBaseURL}/{owner}/{repo}/releases/download/{tag}/{filename}"
+  - Filename pattern (Unix): "spec-kit-agents-sources-{version}.tar.gz"
+  - Filename pattern (Windows): "spec-kit-agents-sources-{version}.zip"
+  - Checksum URL: "{archive-url}.sha256"
+
+usage_examples:
+  - name: Download specific version
+    code: |
+      downloader := download.NewDownloader()
+      opts := download.DownloadOptions{
+          Timeout:     60 * time.Second,
+          MaxRetries:  3,
+          ProgressCallback: &myProgressReporter{},
+      }
+
+      pkg, err := downloader.DownloadRelease("v2.1.0", opts)
+      if err != nil {
+          return fmt.Errorf("download failed: %w", err)
+      }
+
+      log.Printf("Downloaded %d files to %s", pkg.FileCount, pkg.ExtractedPath)
+
+  - name: Check for updates
+    code: |
+      downloader := download.NewDownloader()
+      latest, url, err := downloader.GetLatestVersion("dkoenawan/claude-agent-templates")
+      if err != nil {
+          return err
+      }
+
+      currentVersion := "v2.0.1"
+      if latest != currentVersion {
+          fmt.Printf("Update available: %s -> %s\n", currentVersion, latest)
+          fmt.Printf("Release: %s\n", url)
+      }
+
+  - name: Custom progress reporter
+    code: |
+      type ConsoleProgress struct{}
+
+      func (p *ConsoleProgress) OnProgress(downloaded, total int64, percent float64) {
+          if total > 0 {
+              fmt.Printf("\rDownloading: %.1f%% (%d/%d bytes)", percent, downloaded, total)
+          } else {
+              fmt.Printf("\rDownloading: %d bytes", downloaded)
+          }
+      }
+
+testing:
+  - Unit tests use httptest.Server for mock GitHub responses
+  - Test checksum validation with known files
+  - Test archive extraction with fixture archives
+  - Test retry logic with flaky mock server
+  - Test progress reporting callback
+  - Integration test with real GitHub (optional, CI only)
+  - Test both tar.gz and zip extraction
+  - Test error scenarios (404, timeout, checksum mismatch)
+
+performance:
+  - Download speed limited by network, not code
+  - Checksum validation: ~50MB/s (SHA256)
+  - Archive extraction: ~100MB/s (depends on format)
+  - Memory usage: ~10MB buffer for streaming downloads
+  - Expected total time: ~2-5 seconds for typical 400KB archive
+
+security:
+  - Always validate checksums before using downloaded files
+  - Use HTTPS for all downloads (reject HTTP)
+  - Verify SSL certificates (no InsecureSkipVerify)
+  - Limit archive extraction paths (prevent directory traversal)
+  - Validate extracted file paths don't escape target directory
+  - Clean up temp files containing potentially sensitive data
